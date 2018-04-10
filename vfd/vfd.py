@@ -124,7 +124,6 @@ def _to_code_string(string):
     elif "'" not in string:
         return "r'"+string+"'"
     else:
-        print("asdf")
         # Double the original backslash first, then escape the ""
         return '"'+string.replace("\\", "\\\\").replace('"', '\\"')+'"'
 
