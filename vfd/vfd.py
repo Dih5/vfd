@@ -14,7 +14,6 @@ default_lines = ['-', '--', ':', '-.']
 
 default_markers = ['o', 's', '^', 'p', 'v', "8"]
 
-
 schema = {
     "type": "object",
     "properties": {
@@ -122,10 +121,117 @@ def _to_code_string(string):
     if '"' not in string:
         return 'r"' + string + '"'
     elif "'" not in string:
-        return "r'"+string+"'"
+        return "r'" + string + "'"
     else:
         # Double the original backslash first, then escape the ""
-        return '"'+string.replace("\\", "\\\\").replace('"', '\\"')+'"'
+        return '"' + string.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def _create_matplotlib_plot(description, container="plt", current_axes=True, indentation_level=0, _indentation_size=4,
+                            marker_list=None, color_list=None):
+    """
+    Create code describing a simple plot.
+
+    Args:
+        description (dict): A part of VFD of type "plot", parsed from the JSON.
+        container (str): The object whose methods are called. E.g., 'plt' for pyplot or an axes.
+        current_axes (bool): Whether to call the set_* methods of the container or the current axes methods (for 'plt').
+        indentation_level: Indentation level for the code.
+        _indentation_size: Number of spaces per indent.
+        marker_list (list of str): Markers to use cyclically for series which are not joined.
+        color_list (list): Colors to use when an index requests to do so.
+
+    Returns:
+        str: Python code which will create the plot.
+
+    """
+    # Markers will automatically switch always to distinguish the series.
+    if marker_list is None:
+        marker_list = default_markers
+    # The other properties will do under explicit demand
+    if color_list is None:
+        color_list = default_colors
+    add_legend = False
+    marker_count = 0  # Next index of a marker series
+    code = ""
+    indentation = " " * (indentation_level * _indentation_size)
+    for s in description["series"]:
+        y = s["y"]
+        if "x" in s:
+            args = [s["x"], y]
+        else:
+            args = [y]
+        kwargs = {}
+        if "label" in s and s["label"]:
+            kwargs["label"] = s["label"]
+            add_legend = True
+        if "color" in s:
+            kwargs["color"] = _cycle_property(s["color"] - 1, color_list)  # User colors start at 1
+
+        if any([i in s for i in {"xerr", "xmax", "xmin", "yerr", "ymin", "ymax"}]):
+            # Error bar plot
+            if "ymin" or "ymax" in s:
+                # Custom error bars
+                ymin = _full_errorbar(y, s["ymin"] if "ymin" in s else None, s["yerr"] if "yerr" in s else None,
+                                      False)
+                ymax = _full_errorbar(y, s["ymax"] if "ymax" in s else None, s["yerr"] if "yerr" in s else None,
+                                      True)
+
+                kwargs["yerr"] = [ymin, ymax]
+            elif "yerr" in s:
+                kwargs["yerr"] = s["yerr"]
+            if "xmin" or "xmax" in s:
+                # Custom error bars
+                x = s["x"] if "x" in s else list(range(len(y)))
+                xmin = _full_errorbar(x, s["xmin"] if "xmin" in s else None, s["xerr"] if "xerr" in s else None,
+                                      False)
+                xmax = _full_errorbar(x, s["xmax"] if "xmax" in s else None, s["xerr"] if "xerr" in s else None,
+                                      True)
+
+                kwargs["xerr"] = [xmin, xmax]
+            elif "xerr" in s:
+                kwargs["xerr"] = s["xerr"]
+
+            if "joined" in s:
+                if not s["joined"]:
+                    kwargs["fmt"] = _cycle_property(marker_count, marker_list)
+                    marker_count += 1
+
+            # Add indentation to aid edition
+            code += indentation + container + '.errorbar(*%s,%s**%s)\n' % (args, "\n" + indentation + " " * 12, kwargs)
+        else:
+            # Regular plot
+            if "joined" in s:
+                if not s["joined"]:
+                    args.append(_cycle_property(marker_count, marker_list))
+                    marker_count += 1
+            if kwargs:
+                # Add indentation to aid edition
+                code += indentation + container + '.plot(*%s,%s**%s)\n' % (args, "\n" + indentation + " " * 8, kwargs)
+            else:
+                code += indentation + container + '.plot(*%s)\n' % (args)
+
+    if "xrange" in description:
+        code += indentation + container + ('.' if current_axes else '.set_') + 'xlim(%f,%f)\n' % (
+            description["xrange"][0], description["xrange"][1])
+    if "yrange" in description:
+        code += indentation + container + ('.' if current_axes else '.set_') + 'ylim(%f,%f)\n' % (
+            description["yrange"][0], description["yrange"][1])
+
+    if add_legend:
+        if "legendtitle" in description:
+            code += indentation + container + (
+                '.' if current_axes else '.set_') + 'legend(title=%s)\n' % _to_code_string(
+                description["legendtitle"])
+        else:
+            code += indentation + container + ('.' if current_axes else '.set_') + 'legend()\n'
+    if "xlabel" in description:
+        code += indentation + container + ('.' if current_axes else '.set_') + 'xlabel(%s)\n' % _to_code_string(
+            description["xlabel"])
+    if "ylabel" in description:
+        code += indentation + container + ('.' if current_axes else '.set_') + 'ylabel(%s)\n' % _to_code_string(
+            description["ylabel"])
+    return code
 
 
 def create_matplotlib_script(description, export_name="untitled", _indentation_size=4, context=None, export_format=None,
@@ -146,15 +252,9 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
         str: Python code which will create the plot.
 
     """
-    # Markers will automatically switch always to distinguish the series.
-    if marker_list is None:
-        marker_list = default_markers
-    # The other properties will do under explicit demand
-    if color_list is None:
-        color_list = default_colors
-
     code = "#!/usr/bin/env python\nimport matplotlib.pyplot as plt\n"
     indentation = ""
+    indentation_level = 0
     if context is not None and context:
         if isinstance(context, str):
             code += "with plt.style.context(%s):\n" % _to_code_string(context)
@@ -162,92 +262,33 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
             code += "with plt.style.context([%s]):\n" % ", ".join([_to_code_string(s) for s in context])
         else:
             raise TypeError("context must be a str or a list of str")
+        indentation_level = 1
         indentation = " " * _indentation_size
 
     if description["type"] == "plot":
-        add_legend = False
-        marker_count = 0  # Next index of a marker series
-        for s in description["series"]:
-            y = s["y"]
-            if "x" in s:
-                args = [s["x"], y]
-            else:
-                args = [y]
-            kwargs = {}
-            if "label" in s and s["label"]:
-                kwargs["label"] = s["label"]
-                add_legend = True
-            if "color" in s:
-                kwargs["color"] = _cycle_property(s["color"] - 1, color_list)  # User colors start at 1
-
-            if any([i in s for i in {"xerr", "xmax", "xmin", "yerr", "ymin", "ymax"}]):
-                # Error bar plot
-                if "ymin" or "ymax" in s:
-                    # Custom error bars
-                    ymin = _full_errorbar(y, s["ymin"] if "ymin" in s else None, s["yerr"] if "yerr" in s else None,
-                                          False)
-                    ymax = _full_errorbar(y, s["ymax"] if "ymax" in s else None, s["yerr"] if "yerr" in s else None,
-                                          True)
-
-                    kwargs["yerr"] = [ymin, ymax]
-                elif "yerr" in s:
-                    kwargs["yerr"] = s["yerr"]
-                if "xmin" or "xmax" in s:
-                    # Custom error bars
-                    x = s["x"] if "x" in s else list(range(len(y)))
-                    xmin = _full_errorbar(x, s["xmin"] if "xmin" in s else None, s["xerr"] if "xerr" in s else None,
-                                          False)
-                    xmax = _full_errorbar(x, s["xmax"] if "xmax" in s else None, s["xerr"] if "xerr" in s else None,
-                                          True)
-
-                    kwargs["xerr"] = [xmin, xmax]
-                elif "xerr" in s:
-                    kwargs["xerr"] = s["xerr"]
-
-                if "joined" in s:
-                    if not s["joined"]:
-                        kwargs["fmt"] = _cycle_property(marker_count, marker_list)
-                        marker_count += 1
-
-                # Add indentation to aid edition
-                code += indentation + 'plt.errorbar(*%s,%s**%s)\n' % (args, "\n" + indentation + " " * 12, kwargs)
-            else:
-                # Regular plot
-                if "joined" in s:
-                    if not s["joined"]:
-                        args.append(_cycle_property(marker_count, marker_list))
-                        marker_count += 1
-                if kwargs:
-                    # Add indentation to aid edition
-                    code += indentation + 'plt.plot(*%s,%s**%s)\n' % (args, "\n" + indentation + " " * 8, kwargs)
-                else:
-                    code += indentation + 'plt.plot(*%s)\n' % (args)
-
-        if "xrange" in description:
-            code += indentation + 'plt.xlim(%f,%f)\n' % (description["xrange"][0], description["xrange"][1])
-        if "yrange" in description:
-            code += indentation + 'plt.ylim(%f,%f)\n' % (description["yrange"][0], description["yrange"][1])
-
-        if add_legend:
-            if "legendtitle" in description:
-                code += indentation + 'plt.legend(title=%s)\n' % _to_code_string(description["legendtitle"])
-            else:
-                code += indentation + 'plt.legend()\n'
-        if "xlabel" in description:
-            code += indentation + 'plt.xlabel(%s)\n' % _to_code_string(description["xlabel"])
-        if "ylabel" in description:
-            code += indentation + 'plt.ylabel(%s)\n' % _to_code_string(description["ylabel"])
-        if export_format is None or not export_format:
-            code += indentation + 'plt.gcf().canvas.set_window_title(%s)\n' % _to_code_string(export_name)
-            code += indentation + 'plt.show()\n'
-        else:
-            if isinstance(export_format, str):
-                export_format = [export_format]
-            for f in export_format:
-                code += indentation + 'plt.savefig("%s.%s")\n' % (export_name, f)
-        return code
+        code += _create_matplotlib_plot(description, indentation_level=indentation_level,
+                                        _indentation_size=_indentation_size)
+    elif description["type"] == "multiplot":
+        plots_x, plots_y = description["size"]
+        code += "f, axarr = plt.subplots(%d, %d)\n" % (plots_x, plots_y)
+        for i in range(plots_x):
+            for j in range(plots_y):
+                code += _create_matplotlib_plot(description["plots"][i][j], container="axarr[%d][%d]" % (i, j),
+                                                current_axes=False,
+                                                indentation_level=indentation_level,
+                                                _indentation_size=_indentation_size)
     else:
         raise ValueError("Unknown plot type: %s" % description["type"])
+
+    if export_format is None or not export_format:
+        code += indentation + 'plt.gcf().canvas.set_window_title(%s)\n' % _to_code_string(export_name)
+        code += indentation + 'plt.show()\n'
+    else:
+        if isinstance(export_format, str):
+            export_format = [export_format]
+        for f in export_format:
+            code += indentation + 'plt.savefig("%s.%s")\n' % (export_name, f)
+    return code
 
 
 def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwargs):
@@ -278,7 +319,8 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
         pyfile_path = file[:-3] + "py"
         with open(pyfile_path, "w") as output:
             description = json.load(open(file))
-            validate(description, schema)
+            # FIXME: HACK: Validate the new schema
+            # validate(description, schema)
             output.write(create_matplotlib_script(description, export_name=basename, **kwargs))
         if run:
             proc = subprocess.Popen(["python", os.path.abspath(pyfile_path)],
