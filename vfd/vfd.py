@@ -5,7 +5,6 @@ import json
 from glob import glob
 import os
 import subprocess
-from re import escape
 
 from jsonschema import validate
 
@@ -113,6 +112,23 @@ def _full_errorbar(values, error_limit, error, positive):
         return [0] * len(values)
 
 
+def _to_code_string(string):
+    """
+    Transform a string into a suitable representation of print code.
+
+    E.g. in printed form: O'Hara -> r'O\'Hara'
+
+    """
+    if '"' not in string:
+        return 'r"' + string + '"'
+    elif "'" not in string:
+        return "r'"+string+"'"
+    else:
+        print("asdf")
+        # Double the original backslash first, then escape the ""
+        return '"'+string.replace("\\", "\\\\").replace('"', '\\"')+'"'
+
+
 def create_matplotlib_script(description, export_name="untitled", _indentation_size=4, context=None, export_format=None,
                              marker_list=None, color_list=None):
     """
@@ -142,9 +158,11 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
     indentation = ""
     if context is not None and context:
         if isinstance(context, str):
-            code += "with plt.style.context('%s'):\n" % context
+            code += "with plt.style.context(%s):\n" % _to_code_string(context)
+        elif isinstance(context, list):
+            code += "with plt.style.context([%s]):\n" % ", ".join([_to_code_string(s) for s in context])
         else:
-            code += "with plt.style.context(%s):\n" % context
+            raise TypeError("context must be a str or a list of str")
         indentation = " " * _indentation_size
 
     if description["type"] == "plot":
@@ -213,15 +231,15 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
 
         if add_legend:
             if "legendtitle" in description:
-                code += indentation + 'plt.legend(title="%s")\n' % escape(description["legendtitle"])
+                code += indentation + 'plt.legend(title=%s)\n' % _to_code_string(description["legendtitle"])
             else:
                 code += indentation + 'plt.legend()\n'
         if "xlabel" in description:
-            code += indentation + 'plt.xlabel("%s")\n' % escape(description["xlabel"])
+            code += indentation + 'plt.xlabel(%s)\n' % _to_code_string(description["xlabel"])
         if "ylabel" in description:
-            code += indentation + 'plt.ylabel("%s")\n' % escape(description["ylabel"])
+            code += indentation + 'plt.ylabel(%s)\n' % _to_code_string(description["ylabel"])
         if export_format is None or not export_format:
-            code += indentation + 'plt.gcf().canvas.set_window_title("%s")\n' % export_name
+            code += indentation + 'plt.gcf().canvas.set_window_title(%s)\n' % _to_code_string(export_name)
             code += indentation + 'plt.show()\n'
         else:
             if isinstance(export_format, str):
