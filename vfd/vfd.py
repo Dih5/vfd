@@ -287,7 +287,7 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
                                         _indentation_size=_indentation_size)
     elif description["type"] == "multiplot":
         plots_x, plots_y = description["size"]
-        code += "fig, axarr = plt.subplots(%d, %d" % (plots_x, plots_y)  # Note unfinished line
+        code += indentation + "fig, axarr = plt.subplots(%d, %d" % (plots_x, plots_y)  # Note unfinished line
         code += ", sharex=" + ("True" if "xshared" in description and description["xshared"] else "False")
         code += ", sharey=" + ("True" if "yshared" in description and description["yshared"] else "False")
         code += ")\n"
