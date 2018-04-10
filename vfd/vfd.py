@@ -6,7 +6,7 @@ from glob import glob
 import os
 import subprocess
 
-from jsonschema import validate
+from jsonschema import validate as validate_schema
 
 default_colors = ['#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD', '#8C564B', '#E377C2', '#7F7F7F']
 
@@ -14,7 +14,7 @@ default_lines = ['-', '--', ':', '-.']
 
 default_markers = ['o', 's', '^', 'p', 'v', "8"]
 
-schema = {
+schema_plot = {
     "type": "object",
     "properties": {
         "type": {"Description": "Reserved keyword. Must be \"plot\"", "type": "string"},
@@ -28,7 +28,7 @@ schema = {
         "legendtitle": {"Description": "A title to be placed in the legend", "type": "string"},
         "series": {"description": "Series of data in the plot", "type": "array", "minItems": 1, "items": {
             "type": "object", "properties": {
-                "x": {"description": "x-coordinates of the points of the plot. Asummed integers from 1 if not given",
+                "x": {"description": "x-coordinates of the points of the plot. Assumed integers from 1 if not given",
                       "type": "array",
                       "items": {"type": "number"},
                       },
@@ -70,6 +70,23 @@ schema = {
                     "type": "boolean"}}}},
     },
     "required": ["series"]
+}
+
+schema_multiplot = {
+    "type": "object",
+    "properties": {
+        "type": {"Description": "Reserved keyword. Must be \"multiplot\"", "type": "string"},
+        "version": {"Description": "vfd file format version. Reserved for future use", "type": "string"},
+        "size": {"Description": "Number of subplots in horizontal and vertical", "type": "array", "minItems": 2,
+                 "maxItems": 2, "items": {"type": "integer"}},
+        "plots": {"Description": "Bidimensional matrix of plots", "type": "array",
+                  "items": {"type": "array", "items": schema_plot}},
+        "xshared": {"Description:": "If x-axis should be shared", "type": "string", "pattern": "^(all|none|row|col)$"},
+        "yshared": {"Description:": "If y-axis should be shared", "type": "string", "pattern": "^(all|none|row|col)$"},
+        "joined": {"Description:": "If the subplots should be joined by columns and rows", "type": "array",
+                   "minitems": 2, "maxitems": 2, "items": {"type": "boolean"}},
+    },
+    "required": ["size", "plots"]
 }
 
 
@@ -270,13 +287,43 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
                                         _indentation_size=_indentation_size)
     elif description["type"] == "multiplot":
         plots_x, plots_y = description["size"]
-        code += "f, axarr = plt.subplots(%d, %d)\n" % (plots_x, plots_y)
-        for i in range(plots_x):
-            for j in range(plots_y):
-                code += _create_matplotlib_plot(description["plots"][i][j], container="axarr[%d][%d]" % (i, j),
+        code += "fig, axarr = plt.subplots(%d, %d" % (plots_x, plots_y)  # Note unfinished line
+        code += ", sharex=" + ("True" if "xshared" in description and description["xshared"] else "False")
+        code += ", sharey=" + ("True" if "yshared" in description and description["yshared"] else "False")
+        code += ")\n"
+        try:
+            joined = description["joined"]
+            if joined[0]:
+                code += indentation + "fig.subplots_adjust(hspace=0)\n"
+            if joined[1]:
+                code += indentation + "fig.subplots_adjust(wspace=0)\n"
+        except KeyError:
+            pass
+
+        if plots_x == 1 and plots_y == 1:
+            code += _create_matplotlib_plot(description["plots"][0][0], container="axarr",
+                                            current_axes=False,
+                                            indentation_level=indentation_level,
+                                            _indentation_size=_indentation_size)
+        elif plots_x == 1:
+            for i in range(plots_y):
+                code += _create_matplotlib_plot(description["plots"][0][i], container="axarr[%d]" % i,
                                                 current_axes=False,
                                                 indentation_level=indentation_level,
                                                 _indentation_size=_indentation_size)
+        elif plots_y == 1:
+            for i in range(plots_x):
+                code += _create_matplotlib_plot(description["plots"][i][0], container="axarr[%d]" % i,
+                                                current_axes=False,
+                                                indentation_level=indentation_level,
+                                                _indentation_size=_indentation_size)
+        else:
+            for i in range(plots_x):
+                for j in range(plots_y):
+                    code += _create_matplotlib_plot(description["plots"][i][j], container="axarr[%d][%d]" % (i, j),
+                                                    current_axes=False,
+                                                    indentation_level=indentation_level,
+                                                    _indentation_size=_indentation_size)
     else:
         raise ValueError("Unknown plot type: %s" % description["type"])
 
@@ -319,8 +366,14 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
         pyfile_path = file[:-3] + "py"
         with open(pyfile_path, "w") as output:
             description = json.load(open(file))
-            # FIXME: HACK: Validate the new schema
-            # validate(description, schema)
+            if "type" not in description:
+                raise ValueError("No type in provided file")
+            if description["type"] == "plot":
+                validate_schema(description, schema_plot)
+            elif description["type"] == "multiplot":
+                validate_schema(description, schema_multiplot)
+            else:
+                raise ValueError("Unknown type: %s" % description["type"])
             output.write(create_matplotlib_script(description, export_name=basename, **kwargs))
         if run:
             proc = subprocess.Popen(["python", os.path.abspath(pyfile_path)],
