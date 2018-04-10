@@ -61,11 +61,17 @@ Do you want to become a volunteer?! Here are some instructions to set up `vfd` f
 
     $ git clone git@github.com:your_name_here/vfd.git
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+3. Install your local copy into a virtualenv. From the repository root you can::
 
-    $ mkvirtualenv vfd
-    $ cd vfd/
-    $ python setup.py develop
+    $ virtualenv venv
+    $ source venv/bin/activate
+    $ pip install -e .
+
+   You should also install the dev requisites::
+
+    $ pip install -r requirements_dev.txt
+
+   Don't forget to source your virtualenv to work with the development version.
 
 4. Create a branch for local development::
 
