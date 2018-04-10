@@ -64,6 +64,8 @@ schema_plot = {
                           "type": ["string", "number"]},
                 "color": {"description": "An index representing the color used.",
                           "type": "integer"},
+                "line": {"description": "An index representing the line style used. 1 should be a solid line.",
+                          "type": "integer"},
                 "joined": {
                     "description": "Whether the data should be joined (representing a continuum) "
                                    "or not (representing the actual given points)",
@@ -145,7 +147,7 @@ def _to_code_string(string):
 
 
 def _create_matplotlib_plot(description, container="plt", current_axes=True, indentation_level=0, _indentation_size=4,
-                            marker_list=None, color_list=None):
+                            marker_list=None, color_list=None, line_list=None):
     """
     Create code describing a simple plot.
 
@@ -157,6 +159,7 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
         _indentation_size: Number of spaces per indent.
         marker_list (list of str): Markers to use cyclically for series which are not joined.
         color_list (list): Colors to use when an index requests to do so.
+        line_list (list of str): Line styles to use when requested.
 
     Returns:
         str: Python code which will create the plot.
@@ -168,6 +171,8 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
     # The other properties will do under explicit demand
     if color_list is None:
         color_list = default_colors
+    if line_list is None:
+        line_list = default_lines
     add_legend = False
     marker_count = 0  # Next index of a marker series
     code = ""
@@ -184,6 +189,8 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
             add_legend = True
         if "color" in s:
             kwargs["color"] = _cycle_property(s["color"] - 1, color_list)  # User colors start at 1
+        if "line" in s:
+            kwargs["linestyle"] = _cycle_property(s["line"] - 1, line_list)  # User colors start at 1
 
         if any([i in s for i in {"xerr", "xmax", "xmin", "yerr", "ymin", "ymax"}]):
             # Error bar plot
@@ -252,7 +259,7 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
 
 
 def create_matplotlib_script(description, export_name="untitled", _indentation_size=4, context=None, export_format=None,
-                             marker_list=None, color_list=None):
+                             marker_list=None, color_list=None, line_style=None):
     """
     Create a matplotlib script to plot the VFD with the given description.
 
@@ -264,6 +271,7 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
         export_format (str or list of str): Format(s) to export to.
         marker_list (list of str): Markers to use cyclically for series which are not joined.
         color_list (list): Colors to use when an index requests to do so.
+        line_style (list of str): Line styles to use when requested.
 
     Returns:
         str: Python code which will create the plot.
@@ -301,29 +309,28 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
             pass
 
         if plots_x == 1 and plots_y == 1:
-            code += _create_matplotlib_plot(description["plots"][0][0], container="axarr",
-                                            current_axes=False,
-                                            indentation_level=indentation_level,
-                                            _indentation_size=_indentation_size)
+            code += _create_matplotlib_plot(description["plots"][0][0], container="axarr", current_axes=False,
+                                            indentation_level=indentation_level, _indentation_size=_indentation_size,
+                                            marker_list=marker_list, color_list=color_list, line_list=line_style)
         elif plots_x == 1:
             for i in range(plots_y):
                 code += _create_matplotlib_plot(description["plots"][0][i], container="axarr[%d]" % i,
-                                                current_axes=False,
-                                                indentation_level=indentation_level,
-                                                _indentation_size=_indentation_size)
+                                                current_axes=False, indentation_level=indentation_level,
+                                                _indentation_size=_indentation_size, marker_list=marker_list,
+                                                color_list=color_list, line_list=line_style)
         elif plots_y == 1:
             for i in range(plots_x):
                 code += _create_matplotlib_plot(description["plots"][i][0], container="axarr[%d]" % i,
-                                                current_axes=False,
-                                                indentation_level=indentation_level,
-                                                _indentation_size=_indentation_size)
+                                                current_axes=False, indentation_level=indentation_level,
+                                                _indentation_size=_indentation_size, marker_list=marker_list,
+                                                color_list=color_list, line_list=line_style)
         else:
             for i in range(plots_x):
                 for j in range(plots_y):
                     code += _create_matplotlib_plot(description["plots"][i][j], container="axarr[%d][%d]" % (i, j),
-                                                    current_axes=False,
-                                                    indentation_level=indentation_level,
-                                                    _indentation_size=_indentation_size)
+                                                    current_axes=False, indentation_level=indentation_level,
+                                                    _indentation_size=_indentation_size, marker_list=marker_list,
+                                                    color_list=color_list, line_list=line_style)
     else:
         raise ValueError("Unknown plot type: %s" % description["type"])
 
