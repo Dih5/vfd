@@ -5,20 +5,28 @@ import sys
 import click
 
 from . import vfd
+from . import __version__
 
 
 @click.command()
 @click.argument('file', nargs=-1)
-@click.option('--format', default='', help='Format of the output files. If none, an interactive window will open.')
-@click.option('--style', default='', help='Matplotlib style(s) to use to generate the plot. Styles can be combined '
-                                          'with commas (no spaces among them). Styles further to the right overwrite '
-                                          'values defined by styles to their left.')
-def main(file, format, style):
+@click.option('--format', "-f", default='',
+              help='Format of the output files. If none, an interactive window will open.')
+@click.option('--style', "-s", default='',
+              help='Matplotlib style(s) to use to generate the plot. Styles can be combined with commas (no spaces '
+                   'among them). Styles further to the right overwrite values defined by styles to their left.')
+@click.option('--version', is_flag=True, help='Display version and exit')
+def main(file, format, style, version):
     """Command line interface for Vernacular Figure Description."""
+    if version:
+        click.echo("vfd " + __version__)
+        exit(0)
     # NOTE: Styles with a comma in their names (!) won't be processed properly.
     # If we wanted to support this, a escape procedure should be defined.
     if style is not None and "," in style:
         style = style.split(",")
+    if format is not None and "," in format:
+        format = format.split(",")
     if file:
         for f in file:
             vfd.create_scripts(path=f, export_format=format, context=style, run=True)
