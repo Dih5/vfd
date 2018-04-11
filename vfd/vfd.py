@@ -346,6 +346,16 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
         str: Python code which will create the plot.
 
     """
+    # Consider only top level style hinting
+    if "style" in description:
+        style_description = description["style"]
+        if line_list is None and "lines" in style_description:
+            line_list = style_description["lines"]
+        if color_list is None and "colors" in style_description:
+            color_list = style_description["colors"]
+        if marker_list is None and "markers" in style_description:
+            marker_list = style_description["markers"]
+
     code = "#!/usr/bin/env python\nimport matplotlib.pyplot as plt\n"
     indentation = ""
     indentation_level = 0
@@ -457,13 +467,7 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
                 validate_schema(description, schema_multiplot)
             else:
                 raise ValueError("Unknown type: %s" % description["type"])
-            # Consider only top level style hinting
-            if "style" in description:
-                style_kwargs = _get_style(description["style"])
-            else:
-                style_kwargs = {}
-            # FIXME: Merge kwargs and style_args into a single one, removing duplicates from style
-            output.write(create_matplotlib_script(description, export_name=basename, **kwargs, **style_kwargs))
+            output.write(create_matplotlib_script(description, export_name=basename, **kwargs))
         if run:
             proc = subprocess.Popen(["python", os.path.abspath(pyfile_path)],
                                     cwd=os.path.abspath(os.path.dirname(pyfile_path)))
