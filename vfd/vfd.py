@@ -23,6 +23,8 @@ schema_plot = {
                    "maxItems": 2, "items": {"type": "number"}},
         "yrange": {"Description": "Range of representation in the y-axis", "type": "array", "minItems": 2,
                    "maxItems": 2, "items": {"type": "number"}},
+        "xlog": {"Description": "Whether the scale should be logarithmic in the x-axis", "type": "boolean"},
+        "ylog": {"Description": "Whether the scale should be logarithmic in the y-axis", "type": "boolean"},
         "xlabel": {"Description": "Label for the x-axis", "type": "string"},
         "ylabel": {"Description": "Label for the y-axis", "type": "string"},
         "title": {"Description": "Title for the plot", "type": "string"},
@@ -244,6 +246,11 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
     if "yrange" in description:
         code += indentation + container + ('.' if current_axes else '.set_') + 'ylim(%f,%f)\n' % (
             description["yrange"][0], description["yrange"][1])
+
+    if "xlog" in description and description["xlog"]:
+        code += indentation + container + ('.' if current_axes else '.set_') + 'xscale("log")\n'
+    if "ylog" in description and description["ylog"]:
+        code += indentation + container + ('.' if current_axes else '.set_') + 'yscale("log")\n'
 
     if add_legend:
         if "legendtitle" in description:
