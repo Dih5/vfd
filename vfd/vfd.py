@@ -87,8 +87,8 @@ schema_multiplot = {
         "title": {"Description": "Title for the plots", "type": "string"},
         "xshared": {"Description:": "If x-axis should be shared", "type": "string", "pattern": "^(all|none|row|col)$"},
         "yshared": {"Description:": "If y-axis should be shared", "type": "string", "pattern": "^(all|none|row|col)$"},
-        "joined": {"Description:": "If the subplots should be joined by columns and rows", "type": "array",
-                   "minitems": 2, "maxitems": 2, "items": {"type": "boolean"}},
+        "joined": {"Description:": "If the subplots should be adjacent in horizontal and vertical respectively",
+                   "type": "array", "minitems": 2, "maxitems": 2, "items": {"type": "boolean"}},
     },
     "required": ["plots"]
 }
@@ -299,41 +299,41 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
         code += _create_matplotlib_plot(description, indentation_level=indentation_level,
                                         _indentation_size=_indentation_size)
     elif description["type"] == "multiplot":
-        plots_y = len(description["plots"])
-        plots_x = len(description["plots"][0])
-        code += indentation + "fig, axarr = plt.subplots(%d, %d" % (plots_x, plots_y)  # Note unfinished line
+        plots_ver = len(description["plots"])
+        plots_hor = len(description["plots"][0])
+        code += indentation + "fig, axarr = plt.subplots(%d, %d" % (plots_ver, plots_hor)  # Note unfinished line
         code += ", sharex=" + ("True" if "xshared" in description and description["xshared"] else "False")
         code += ", sharey=" + ("True" if "yshared" in description and description["yshared"] else "False")
         code += ")\n"
         try:
             joined = description["joined"]
-            if joined[0]:
+            if joined[1]:  # Vertical-joined
                 code += indentation + "fig.subplots_adjust(hspace=0)\n"
-            if joined[1]:
+            if joined[0]:  # Horizontal-joined
                 code += indentation + "fig.subplots_adjust(wspace=0)\n"
         except KeyError:
             pass
 
-        if plots_x == 1 and plots_y == 1:
+        if plots_hor == 1 and plots_ver == 1:
             code += _create_matplotlib_plot(description["plots"][0][0], container="axarr", current_axes=False,
                                             indentation_level=indentation_level, _indentation_size=_indentation_size,
                                             marker_list=marker_list, color_list=color_list, line_list=line_style)
-        elif plots_x == 1:
-            for i in range(plots_y):
-                code += _create_matplotlib_plot(description["plots"][0][i], container="axarr[%d]" % i,
-                                                current_axes=False, indentation_level=indentation_level,
-                                                _indentation_size=_indentation_size, marker_list=marker_list,
-                                                color_list=color_list, line_list=line_style)
-        elif plots_y == 1:
-            for i in range(plots_x):
+        elif plots_hor == 1:
+            for i in range(plots_ver):
                 code += _create_matplotlib_plot(description["plots"][i][0], container="axarr[%d]" % i,
                                                 current_axes=False, indentation_level=indentation_level,
                                                 _indentation_size=_indentation_size, marker_list=marker_list,
                                                 color_list=color_list, line_list=line_style)
+        elif plots_ver == 1:
+            for j in range(plots_hor):
+                code += _create_matplotlib_plot(description["plots"][0][j], container="axarr[%d]" % j,
+                                                current_axes=False, indentation_level=indentation_level,
+                                                _indentation_size=_indentation_size, marker_list=marker_list,
+                                                color_list=color_list, line_list=line_style)
         else:
-            for i in range(plots_x):
-                for j in range(plots_y):
-                    code += _create_matplotlib_plot(description["plots"][i][j], container="axarr[%d][%d]" % (i, j),
+            for i in range(plots_ver):
+                for j in range(plots_hor):
+                    code += _create_matplotlib_plot(description["plots"][i][j], container="axarr[%d][%d]" % (j, i),
                                                     current_axes=False, indentation_level=indentation_level,
                                                     _indentation_size=_indentation_size, marker_list=marker_list,
                                                     color_list=color_list, line_list=line_style)
