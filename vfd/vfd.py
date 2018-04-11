@@ -66,7 +66,7 @@ schema_plot = {
                 "color": {"description": "An index representing the color used.",
                           "type": "integer"},
                 "line": {"description": "An index representing the line style used. 1 should be a solid line.",
-                          "type": "integer"},
+                         "type": "integer"},
                 "joined": {
                     "description": "Whether the data should be joined (representing a continuum) "
                                    "or not (representing the actual given points)",
@@ -80,17 +80,17 @@ schema_multiplot = {
     "properties": {
         "type": {"Description": "Reserved keyword. Must be \"multiplot\"", "type": "string"},
         "version": {"Description": "vfd file format version. Reserved for future use", "type": "string"},
-        "size": {"Description": "Number of subplots in horizontal and vertical", "type": "array", "minItems": 2,
-                 "maxItems": 2, "items": {"type": "integer"}},
-        "plots": {"Description": "Bidimensional matrix of plots", "type": "array",
-                  "items": {"type": "array", "items": schema_plot}},
+        "plots": {
+            "Description": "Bidimensional matrix of plots. Each item of this array is an array with a row of plots",
+            "type": "array",
+            "items": {"type": "array", "items": schema_plot}},
         "title": {"Description": "Title for the plots", "type": "string"},
         "xshared": {"Description:": "If x-axis should be shared", "type": "string", "pattern": "^(all|none|row|col)$"},
         "yshared": {"Description:": "If y-axis should be shared", "type": "string", "pattern": "^(all|none|row|col)$"},
         "joined": {"Description:": "If the subplots should be joined by columns and rows", "type": "array",
                    "minitems": 2, "maxitems": 2, "items": {"type": "boolean"}},
     },
-    "required": ["size", "plots"]
+    "required": ["plots"]
 }
 
 
@@ -299,7 +299,8 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
         code += _create_matplotlib_plot(description, indentation_level=indentation_level,
                                         _indentation_size=_indentation_size)
     elif description["type"] == "multiplot":
-        plots_x, plots_y = description["size"]
+        plots_y = len(description["plots"])
+        plots_x = len(description["plots"][0])
         code += indentation + "fig, axarr = plt.subplots(%d, %d" % (plots_x, plots_y)  # Note unfinished line
         code += ", sharex=" + ("True" if "xshared" in description and description["xshared"] else "False")
         code += ", sharey=" + ("True" if "yshared" in description and description["yshared"] else "False")
@@ -337,7 +338,7 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
                                                     _indentation_size=_indentation_size, marker_list=marker_list,
                                                     color_list=color_list, line_list=line_style)
         if "title" in description:
-            code += indentation  + 'fig.suptitle(%s)\n' % _to_code_string(description["title"])
+            code += indentation + 'fig.suptitle(%s)\n' % _to_code_string(description["title"])
     else:
         raise ValueError("Unknown plot type: %s" % description["type"])
 
