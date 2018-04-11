@@ -48,15 +48,16 @@ def test_plot_files(tmpdir, file):
 
     # Copy the .vfd
     name = os.path.basename(file)
-    temp_vfd = os.path.join(tmpdir, name[:-3] + "test.vfd")
+    temp_path = str(tmpdir)  # Conversion needed in python < 3.6 to work with os.path
+    temp_vfd = os.path.join(temp_path, name[:-3] + "test.vfd")
     shutil.copyfile(file, temp_vfd)
     # Run it
     vfd.create_scripts(temp_vfd, run=True, blocking=True, export_format=export_format)
     # Copy the reference script
-    temp_ref = os.path.join(tmpdir, name[:-3] + "py")
+    temp_ref = os.path.join(temp_path, name[:-3] + "py")
     shutil.copyfile(file[:-3] + "py", temp_ref)
     # Run it
-    proc = subprocess.Popen(["python", os.path.abspath(temp_ref)], cwd=os.path.abspath(tmpdir))
+    proc = subprocess.Popen(["python", os.path.abspath(temp_ref)], cwd=os.path.abspath(temp_path))
     proc.wait()
     # Compare the files
     assert filecmp.cmp(temp_vfd[:-3] + export_format, temp_ref[:-2] + export_format)
