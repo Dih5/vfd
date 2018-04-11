@@ -308,8 +308,10 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
         plots_ver = len(description["plots"])
         plots_hor = len(description["plots"][0])
         code += indentation + "fig, axarr = plt.subplots(%d, %d" % (plots_ver, plots_hor)  # Note unfinished line
-        code += ", sharex=" + ("True" if "xshared" in description and description["xshared"] else "False")
-        code += ", sharey=" + ("True" if "yshared" in description and description["yshared"] else "False")
+        if "xshared" in description:
+            code += ', sharex="%s"' % description["xshared"]
+        if "yshared" in description:
+            code += ', sharey="%s"' % description["yshared"]
         code += ")\n"
         try:
             joined = description["joined"]
