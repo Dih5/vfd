@@ -25,6 +25,7 @@ schema_plot = {
                    "maxItems": 2, "items": {"type": "number"}},
         "xlabel": {"Description": "Label for the x-axis", "type": "string"},
         "ylabel": {"Description": "Label for the y-axis", "type": "string"},
+        "title": {"Description": "Title for the plot", "type": "string"},
         "legendtitle": {"Description": "A title to be placed in the legend", "type": "string"},
         "series": {"description": "Series of data in the plot", "type": "array", "minItems": 1, "items": {
             "type": "object", "properties": {
@@ -83,6 +84,7 @@ schema_multiplot = {
                  "maxItems": 2, "items": {"type": "integer"}},
         "plots": {"Description": "Bidimensional matrix of plots", "type": "array",
                   "items": {"type": "array", "items": schema_plot}},
+        "title": {"Description": "Title for the plots", "type": "string"},
         "xshared": {"Description:": "If x-axis should be shared", "type": "string", "pattern": "^(all|none|row|col)$"},
         "yshared": {"Description:": "If y-axis should be shared", "type": "string", "pattern": "^(all|none|row|col)$"},
         "joined": {"Description:": "If the subplots should be joined by columns and rows", "type": "array",
@@ -255,6 +257,9 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
     if "ylabel" in description:
         code += indentation + container + ('.' if current_axes else '.set_') + 'ylabel(%s)\n' % _to_code_string(
             description["ylabel"])
+    if "title" in description:
+        code += indentation + container + ('.' if current_axes else '.set_') + 'title(%s)\n' % _to_code_string(
+            description["title"])
     return code
 
 
@@ -331,6 +336,8 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
                                                     current_axes=False, indentation_level=indentation_level,
                                                     _indentation_size=_indentation_size, marker_list=marker_list,
                                                     color_list=color_list, line_list=line_style)
+        if "title" in description:
+            code += indentation  + 'fig.suptitle(%s)\n' % _to_code_string(description["title"])
     else:
         raise ValueError("Unknown plot type: %s" % description["type"])
 
