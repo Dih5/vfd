@@ -246,11 +246,9 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
 
     if add_legend:
         if "legendtitle" in description:
-            code += indentation + container + (
-                '.' if current_axes else '.set_') + 'legend(title=%s)\n' % _to_code_string(
-                description["legendtitle"])
+            code += indentation + container + '.legend(title=%s)\n' % _to_code_string(description["legendtitle"])
         else:
-            code += indentation + container + ('.' if current_axes else '.set_') + 'legend()\n'
+            code += indentation + container + '.legend()\n'
     if "xlabel" in description:
         code += indentation + container + ('.' if current_axes else '.set_') + 'xlabel(%s)\n' % _to_code_string(
             description["xlabel"])
