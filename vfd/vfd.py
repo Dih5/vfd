@@ -149,7 +149,7 @@ def _to_code_string(string):
 
 
 def _create_matplotlib_plot(description, container="plt", current_axes=True, indentation_level=0, _indentation_size=4,
-                            marker_list=None, color_list=None, line_list=None):
+                            marker_list=None, color_list=None, line_list=None, title_inside=False):
     """
     Create code describing a simple plot.
 
@@ -162,6 +162,7 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
         marker_list (list of str): Markers to use cyclically for series which are not joined.
         color_list (list): Colors to use when an index requests to do so.
         line_list (list of str): Line styles to use when requested.
+        title_inside (bool): Insert the title as text inside the plot instead as a title. Useful for multiplots.
 
     Returns:
         str: Python code which will create the plot.
@@ -255,9 +256,16 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
     if "ylabel" in description:
         code += indentation + container + ('.' if current_axes else '.set_') + 'ylabel(%s)\n' % _to_code_string(
             description["ylabel"])
-    if "title" in description:
-        code += indentation + container + ('.' if current_axes else '.set_') + 'title(%s)\n' % _to_code_string(
-            description["title"])
+    if "title" in description and description["title"]:
+        # Title can be requested to go inside the figure as a text.
+        # This is useful for multiplots, where an upper title can be confusing.
+        if title_inside:
+            code += indentation + container + \
+                    '.text(.5,.95,%s, horizontalalignment="center",transform=%s.transAxes)\n' % (
+                        _to_code_string(description["title"]), container)
+        else:
+            code += indentation + container + ('.' if current_axes else '.set_') + 'title(%s)\n' % _to_code_string(
+                description["title"])
     return code
 
 
@@ -315,26 +323,27 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
         if plots_hor == 1 and plots_ver == 1:
             code += _create_matplotlib_plot(description["plots"][0][0], container="axarr", current_axes=False,
                                             indentation_level=indentation_level, _indentation_size=_indentation_size,
-                                            marker_list=marker_list, color_list=color_list, line_list=line_style)
+                                            marker_list=marker_list, color_list=color_list, line_list=line_style,
+                                            title_inside=True)
         elif plots_hor == 1:
             for i in range(plots_ver):
                 code += _create_matplotlib_plot(description["plots"][i][0], container="axarr[%d]" % i,
                                                 current_axes=False, indentation_level=indentation_level,
                                                 _indentation_size=_indentation_size, marker_list=marker_list,
-                                                color_list=color_list, line_list=line_style)
+                                                color_list=color_list, line_list=line_style, title_inside=True)
         elif plots_ver == 1:
             for j in range(plots_hor):
                 code += _create_matplotlib_plot(description["plots"][0][j], container="axarr[%d]" % j,
                                                 current_axes=False, indentation_level=indentation_level,
                                                 _indentation_size=_indentation_size, marker_list=marker_list,
-                                                color_list=color_list, line_list=line_style)
+                                                color_list=color_list, line_list=line_style, title_inside=True)
         else:
             for i in range(plots_ver):
                 for j in range(plots_hor):
                     code += _create_matplotlib_plot(description["plots"][i][j], container="axarr[%d][%d]" % (j, i),
                                                     current_axes=False, indentation_level=indentation_level,
                                                     _indentation_size=_indentation_size, marker_list=marker_list,
-                                                    color_list=color_list, line_list=line_style)
+                                                    color_list=color_list, line_list=line_style, title_inside=True)
         if "title" in description:
             code += indentation + 'fig.suptitle(%s)\n' % _to_code_string(description["title"])
     else:
