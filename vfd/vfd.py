@@ -14,6 +14,18 @@ default_lines = ['-', '--', ':', '-.']
 
 default_markers = ['o', 's', '^', 'p', 'v', "8"]
 
+schema_style = {
+    "type": "object",
+    "properties": {
+        "lines": {"Description": "List of lines suggested for each index of the plot", "type": "array",
+                  "items": {"type": "string"}},
+        "colors": {"Description": "List of colors suggested for each index of the plot", "type": "array",
+                   "items": {"type": "string"}},
+        "markers": {"Description": "List of markers suggested for each index of the plot", "type": "array",
+                    "items": {"type": "string"}}
+    }
+}
+
 schema_plot = {
     "type": "object",
     "properties": {
@@ -73,6 +85,8 @@ schema_plot = {
                     "description": "Whether the data should be joined (representing a continuum) "
                                    "or not (representing the actual given points)",
                     "type": "boolean"}}}},
+
+        "style": schema_style,
     },
     "required": ["series"]
 }
@@ -91,6 +105,7 @@ schema_multiplot = {
         "yshared": {"Description:": "If y-axis should be shared", "type": "string", "pattern": "^(all|none|row|col)$"},
         "joined": {"Description:": "If the subplots should be adjacent in horizontal and vertical respectively",
                    "type": "array", "minitems": 2, "maxitems": 2, "items": {"type": "boolean"}},
+        "style": schema_style
     },
     "required": ["plots"]
 }
@@ -150,6 +165,27 @@ def _to_code_string(string):
         return '"' + string.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
+def _get_style(description):
+    """
+    Get the kwargs from a style_schema
+
+    Args:
+        description (dict): A style_schema.
+
+    Returns:
+        dict: A dictionary with the kwargs.
+
+    """
+    kwargs = {}
+    if "lines" in description:
+        kwargs["line_style"] = description["lines"]
+    if "colors" in description:
+        kwargs["color_list"] = description["colors"]
+    if "markers" in description:
+        kwargs["marker_list"] = description["markers"]
+    return kwargs
+
+
 def _create_matplotlib_plot(description, container="plt", current_axes=True, indentation_level=0, _indentation_size=4,
                             marker_list=None, color_list=None, line_list=None, title_inside=False):
     """
@@ -173,13 +209,22 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
     # Markers will automatically switch always to distinguish the series.
     if marker_list is None:
         marker_list = default_markers
-    # The other properties will do under explicit demand
+    # The other properties will do under explicit demand (otherwise it's left to matplotlib's style)
     if color_list is None:
         color_list = default_colors
+        explicit_colors = False
+    else:
+        explicit_colors = True
     if line_list is None:
         line_list = default_lines
+        explicit_lines = False
+    else:
+        explicit_lines = True
     add_legend = False
-    marker_count = 0  # Next index of a marker series
+    # Counters for automatic properties:
+    marker_count = 0
+    color_count = 0
+    line_count = 0
     code = ""
     indentation = " " * (indentation_level * _indentation_size)
     for s in description["series"]:
@@ -194,8 +239,14 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
             add_legend = True
         if "color" in s:
             kwargs["color"] = _cycle_property(s["color"] - 1, color_list)  # User colors start at 1
+        elif explicit_colors:
+            kwargs["color"] = _cycle_property(color_count, color_list)
+            color_count += 1
         if "line" in s:
-            kwargs["linestyle"] = _cycle_property(s["line"] - 1, line_list)  # User colors start at 1
+            kwargs["linestyle"] = _cycle_property(s["line"] - 1, line_list)
+        elif explicit_lines:
+            kwargs["linestyle"] = _cycle_property(line_count, line_list)
+            line_count += 1
 
         if any([i in s for i in {"xerr", "xmax", "xmin", "yerr", "ymin", "ymax"}]):
             # Error bar plot
@@ -310,7 +361,8 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
 
     if description["type"] == "plot":
         code += _create_matplotlib_plot(description, indentation_level=indentation_level,
-                                        _indentation_size=_indentation_size)
+                                        _indentation_size=_indentation_size, marker_list=marker_list,
+                                        color_list=color_list, line_list=line_style, )
     elif description["type"] == "multiplot":
         plots_ver = len(description["plots"])
         plots_hor = len(description["plots"][0])
@@ -405,7 +457,13 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
                 validate_schema(description, schema_multiplot)
             else:
                 raise ValueError("Unknown type: %s" % description["type"])
-            output.write(create_matplotlib_script(description, export_name=basename, **kwargs))
+            # Consider only top level style hinting
+            if "style" in description:
+                style_kwargs = _get_style(description["style"])
+            else:
+                style_kwargs = {}
+            # FIXME: Merge kwargs and style_args into a single one, removing duplicates from style
+            output.write(create_matplotlib_script(description, export_name=basename, **kwargs, **style_kwargs))
         if run:
             proc = subprocess.Popen(["python", os.path.abspath(pyfile_path)],
                                     cwd=os.path.abspath(os.path.dirname(pyfile_path)))
