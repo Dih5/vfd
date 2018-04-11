@@ -340,7 +340,7 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
         else:
             for i in range(plots_ver):
                 for j in range(plots_hor):
-                    code += _create_matplotlib_plot(description["plots"][i][j], container="axarr[%d][%d]" % (j, i),
+                    code += _create_matplotlib_plot(description["plots"][i][j], container="axarr[%d][%d]" % (i, j),
                                                     current_axes=False, indentation_level=indentation_level,
                                                     _indentation_size=_indentation_size, marker_list=marker_list,
                                                     color_list=color_list, line_list=line_style, title_inside=True)

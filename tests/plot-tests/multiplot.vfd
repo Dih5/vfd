@@ -19,7 +19,7 @@
                     }
                 ],
                 "type": "plot",
-                "xlabel": "Plot 0,0"
+                "xlabel": "Matrix element 1,1"
             },
             {
                 "series": [
@@ -39,7 +39,7 @@
                     }
                 ],
                 "type": "plot",
-                "xlabel": "Plot 1,0"
+                "xlabel": "Matrix element 1,2"
             }
         ],
         [
@@ -61,7 +61,7 @@
                     }
                 ],
                 "type": "plot",
-                "xlabel": "Plot 0,1"
+                "xlabel": "Matrix element 2,1"
             },
             {
                 "series": [
@@ -81,7 +81,7 @@
                     }
                 ],
                 "type": "plot",
-                "xlabel": "Plot 1,1"
+                "xlabel": "Matrix element 2,2"
             }
         ]
     ],
