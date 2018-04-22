@@ -3,15 +3,23 @@ from os import path
 import tempfile
 import subprocess
 
-import numpy as np
+try:
+    import numpy as np
 
 
-def _ensure_normal_type(some_list):
-    if isinstance(some_list, np.ndarray):
-        return some_list.tolist()
-    elif isinstance(some_list[0], np.generic):
-        return [np.asscalar(x) for x in some_list]
-    else:
+    def _ensure_normal_type(some_list):
+        """Make sure a list with data is regular python"""
+        if isinstance(some_list, np.ndarray):
+            return some_list.tolist()
+        elif isinstance(some_list[0], np.generic):
+            return [np.asscalar(x) for x in some_list]
+        else:
+            return some_list
+
+except ImportError:
+    # Assume no numpy is used if no numpy is around
+    def _ensure_normal_type(some_list):
+        """Make sure a list with data is regular python"""
         return some_list
 
 
