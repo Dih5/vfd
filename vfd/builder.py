@@ -22,6 +22,19 @@ class Builder:
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
+    def semilogx(self, *args, **kwargs):
+        self.data["xlog"] = True
+        self.plot(args, kwargs)
+
+    def semilogy(self, *args, **kwargs):
+        self.data["ylog"] = True
+        self.plot(args, kwargs)
+
+    def loglog(self, *args, **kwargs):
+        self.data["xlog"] = True
+        self.data["ylog"] = True
+        self.plot(args, kwargs)
+
     def plot(self, *args, **kwargs):
         self.data["type"] = "plot"
         if len(args) == 0:
