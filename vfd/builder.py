@@ -32,16 +32,16 @@ class Builder:
 
     def semilogx(self, *args, **kwargs):
         self.data["xlog"] = True
-        self.plot(args, kwargs)
+        self.plot(*args, **kwargs)
 
     def semilogy(self, *args, **kwargs):
         self.data["ylog"] = True
-        self.plot(args, kwargs)
+        self.plot(*args, **kwargs)
 
     def loglog(self, *args, **kwargs):
         self.data["xlog"] = True
         self.data["ylog"] = True
-        self.plot(args, kwargs)
+        self.plot(*args, **kwargs)
 
     def plot(self, *args, **kwargs):
         self.data["type"] = "plot"
