@@ -5,6 +5,7 @@ import subprocess
 
 import numpy as np
 
+
 def _ensure_normal_type(some_list):
     if isinstance(some_list, np.ndarray):
         return some_list.tolist()
@@ -66,6 +67,9 @@ class Builder:
 
     def ylabel(self, label, **kwargs):
         self.data["ylabel"] = label
+
+    def title(self, title, *args):
+        self.data["title"] = title
 
     def legend(self, *args, **kwargs):
         # TODO: Parse args.
