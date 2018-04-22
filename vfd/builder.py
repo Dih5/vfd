@@ -5,6 +5,14 @@ import subprocess
 
 import numpy as np
 
+def _ensure_normal_type(some_list):
+    if isinstance(some_list, np.ndarray):
+        return some_list.tolist()
+    elif isinstance(some_list[0], np.generic):
+        return [np.asscalar(x) for x in some_list]
+    else:
+        return some_list
+
 
 class Builder:
     """
@@ -41,21 +49,10 @@ class Builder:
             raise TypeError("At least one argument is needed")
         new_series = {}
         if len(args) == 1:
-            if isinstance(args[0], np.ndarray):
-                new_series["y"] = args[0].tolist()
-            else:
-                new_series["y"] = args[0]
+            new_series["y"] = _ensure_normal_type(args[0])
         else:
-            if isinstance(args[0], np.ndarray):
-                new_series["x"] = args[0].tolist()
-            else:
-                new_series["x"] = args[0]
-
-            if isinstance(args[1], np.ndarray):
-                new_series["y"] = args[1].tolist()
-            else:
-                new_series["y"] = args[1]
-
+            new_series["x"] = _ensure_normal_type(args[0])
+            new_series["y"] = _ensure_normal_type(args[1])
         if "label" in kwargs:
             new_series["label"] = kwargs["label"]
 
