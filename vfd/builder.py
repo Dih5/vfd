@@ -3,6 +3,8 @@ from os import path
 import tempfile
 import subprocess
 
+import numpy as np
+
 
 class Builder:
     """
