@@ -318,9 +318,9 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
         # Title can be requested to go inside the figure as a text.
         # This is useful for multiplots, where an upper title can be confusing.
         if title_inside:
-            code += indentation + container + \
-                    '.text(.5,.95,%s, horizontalalignment="center",transform=%s.transAxes)\n' % (
-                        _to_code_string(description["title"]), container)
+            code += indentation + container + '.text(.5,.95,%s, horizontalalignment="center",' \
+                                              'transform=%s.transAxes)\n' % (_to_code_string(description["title"]),
+                                                                             container)
         else:
             code += indentation + container + ('.' if current_axes else '.set_') + 'title(%s)\n' % _to_code_string(
                 description["title"])
