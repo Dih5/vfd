@@ -117,7 +117,7 @@ class Builder:
     def show(self):
         # TODO: Doesn't work from Jupyter
         with tempfile.NamedTemporaryFile(suffix=".vfd") as f:
-            self.savefig(f.name)
+            self.savevfd(f.name)
             # Prefer the system installed vfd to the package
             proc = subprocess.Popen(["vfd", path.abspath(f.name)],
                                     cwd=path.abspath(path.dirname(f.name)))
@@ -125,8 +125,7 @@ class Builder:
         if self.to_matplotlib:
             return plt.show()
 
-    def savefig(self, fname):
-        orig_name = fname
+    def savevfd(self, fname):
         if "." in path.basename(fname):  # If has an extension
             fname = fname.rsplit(".", 1)[0]  # Remove it
 
@@ -135,5 +134,8 @@ class Builder:
         with open(fname, "w") as text_file:
             text_file.write(self.to_json())
 
+    def savefig(self, fname):
+        self.savevfd(fname)
+
         if self.to_matplotlib:
-            return plt.savefig(orig_name)
+            return plt.savefig(fname)
