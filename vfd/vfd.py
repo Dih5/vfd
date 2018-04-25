@@ -328,7 +328,7 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
 
 
 def create_matplotlib_script(description, export_name="untitled", _indentation_size=4, context=None, export_format=None,
-                             marker_list=None, color_list=None, line_list=None):
+                             marker_list=None, color_list=None, line_list=None, tight_layout=None):
     """
     Create a matplotlib script to plot the VFD with the given description.
 
@@ -341,6 +341,7 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
         marker_list (list of str): Markers to use cyclically for series which are not joined.
         color_list (list): Colors to use when an index requests to do so.
         line_list (list of str): Line styles to use when requested.
+        tight_layout (bool): Use the tight_layout function to fit the plot.
 
     Returns:
         str: Python code which will create the plot.
@@ -373,6 +374,9 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
         code += _create_matplotlib_plot(description, indentation_level=indentation_level,
                                         _indentation_size=_indentation_size, marker_list=marker_list,
                                         color_list=color_list, line_list=line_list, )
+        if tight_layout:
+            code += indentation + "plt.tight_layout()\n"
+
     elif description["type"] == "multiplot":
         plots_ver = len(description["plots"])
         plots_hor = len(description["plots"][0])
@@ -382,14 +386,6 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
         if "yshared" in description:
             code += ', sharey="%s"' % description["yshared"]
         code += ")\n"
-        try:
-            joined = description["joined"]
-            if joined[1]:  # Vertical-joined
-                code += indentation + "fig.subplots_adjust(hspace=0)\n"
-            if joined[0]:  # Horizontal-joined
-                code += indentation + "fig.subplots_adjust(wspace=0)\n"
-        except KeyError:
-            pass
 
         if plots_hor == 1 and plots_ver == 1:
             code += _create_matplotlib_plot(description["plots"][0][0], container="axarr", current_axes=False,
@@ -417,6 +413,21 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
                                                     color_list=color_list, line_list=line_list, title_inside=True)
         if "title" in description:
             code += indentation + 'fig.suptitle(%s)\n' % _to_code_string(description["title"])
+
+        if tight_layout:
+            code += indentation + "plt.tight_layout()\n"
+        # Always join after the tight_layout to avoid splitting.
+        try:
+            joined = description["joined"]
+            if joined[1]:  # Vertical-joined
+                code += indentation + "fig.subplots_adjust(hspace=0)\n"
+            if joined[0]:  # Horizontal-joined
+                code += indentation + "fig.subplots_adjust(wspace=0)\n"
+        except KeyError:
+            pass
+
+
+
     else:
         raise ValueError("Unknown plot type: %s" % description["type"])
 

@@ -15,8 +15,9 @@ from . import __version__
 @click.option('--style', "-s", default='',
               help='Matplotlib style(s) to use to generate the plot. Styles can be combined with commas (no spaces '
                    'among them). Styles further to the right overwrite values defined by styles to their left.')
+@click.option('--tight', is_flag=True, help='Use tight_layout')
 @click.option('--version', is_flag=True, help='Display version and exit')
-def main(file, format, style, version):
+def main(file, format, style, tight, version):
     """Command line interface for Vernacular Figure Description."""
     if version:
         click.echo("vfd " + __version__)
@@ -29,7 +30,7 @@ def main(file, format, style, version):
         format = format.split(",")
     if file:
         for f in file:
-            vfd.create_scripts(path=f, export_format=format, context=style, run=True)
+            vfd.create_scripts(path=f, export_format=format, context=style, run=True, tight_layout=tight)
     else:
         _print_help_msg(main)
     return 0
