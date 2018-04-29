@@ -1,5 +1,6 @@
 import json
 from os import path
+import math
 import tempfile
 import subprocess
 
@@ -9,20 +10,34 @@ try:
     import numpy as np
 
 
-    def _ensure_normal_type(some_list):
-        """Make sure a list with data is regular python"""
-        if isinstance(some_list, np.ndarray):
-            return some_list.tolist()
-        elif isinstance(some_list[0], np.generic):
-            return [np.asscalar(x) for x in some_list]
-        else:
-            return some_list
+    def _ensure_normal_type(*lists):
+        """Make sure lists of data are regular python"""
+        ret = tuple([[] for _ in range(len(lists))])
+        numpy_types = [isinstance(i, np.generic) for i in next(zip(*lists))]
+        for items in zip(*lists):
+            if any(np.isnan(x) for x in items):
+                pass
+            else:
+                for pos, i in enumerate(items):
+                    if numpy_types[pos]:
+                        ret[pos].append(np.asscalar(i))
+                    else:
+                        ret[pos].append(i)
+        return ret
+
 
 except ImportError:
     # Assume no numpy is used if no numpy is around
-    def _ensure_normal_type(some_list):
-        """Make sure a list with data is regular python"""
-        return some_list
+    def _ensure_normal_type(*lists):
+        """Make sure lists of data are regular python"""
+        ret = tuple([[] for _ in range(len(lists))])
+        for items in zip(*lists):
+            if any(math.isnan(x) for x in items):
+                pass
+            else:
+                for pos, i in enumerate(items):
+                    ret[pos].append(i)
+        return ret
 
 
 class Builder:
@@ -79,10 +94,9 @@ class Builder:
             raise TypeError("At least one argument is needed")
         new_series = {}
         if len(args) == 1:
-            new_series["y"] = _ensure_normal_type(args[0])
+            new_series["y"] = _ensure_normal_type(args[0])[0]
         else:
-            new_series["x"] = _ensure_normal_type(args[0])
-            new_series["y"] = _ensure_normal_type(args[1])
+            new_series["x"], new_series["y"] = _ensure_normal_type(args[0], args[1])
         if "label" in kwargs:
             new_series["label"] = kwargs["label"]
 
