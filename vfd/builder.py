@@ -159,9 +159,9 @@ class Builder:
 
     def ylim(self, *args, **kwargs):
         if len(args) == 2:
-            self.data["ylim"] = args
+            self.data["yrange"] = args
         elif len(args) == 1:
-            self.data["ylim"] = args[0]
+            self.data["yrange"] = args[0]
         # TODO: Parse kwargs
         if self.to_matplotlib:
             return plt.ylim(*args, **kwargs)
@@ -169,9 +169,9 @@ class Builder:
 
     def xlim(self, *args, **kwargs):
         if len(args) == 2:
-            self.data["xlim"] = args
+            self.data["xrange"] = args
         elif len(args) == 1:
-            self.data["xlim"] = args[0]
+            self.data["xrange"] = args[0]
         # TODO: Parse kwargs
         if self.to_matplotlib:
             return plt.xlim(*args, **kwargs)
