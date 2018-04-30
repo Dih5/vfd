@@ -7,6 +7,11 @@ import subprocess
 import matplotlib.pyplot as plt
 
 try:
+    import itertools.izip as zip
+except ImportError:
+    pass
+
+try:
     import numpy as np
 
 
