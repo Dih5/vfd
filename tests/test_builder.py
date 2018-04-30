@@ -3,10 +3,13 @@
 
 """Tests for the builder module."""
 import math
+import os
+import shutil
+import filecmp
 
 import numpy as np
 
-from vfd import builder
+from vfd import builder, vfd
 
 
 def test_ensure_normal_type():
@@ -35,3 +38,26 @@ def test_ensure_normal_type():
     # Two lists
     assert ([1, 2], [3, 4]) == builder._ensure_normal_type([1, 2], [3, 4])
     assert ([1, 2], [10, 20]) == builder._ensure_normal_type([1, np.nan, 2], [10, 13, 20])
+
+
+def test_builder_runs(tmpdir):
+    """Test the Builder class is working"""
+    export_format = 'png'
+
+    # Set paths
+    temp_path = str(tmpdir)  # Conversion needed in python < 3.6 to work with os.path
+    temp_vfd = os.path.join(temp_path, "builder.vfd")
+    temp_plt = os.path.join(temp_path, "builder." + export_format)
+
+    with builder.Builder() as p:
+        p.plot([1, 2, 3], label="Data")
+        p.xlabel("Test")
+        p.title("A test")
+        p.legend()
+        p.savefig(temp_plt)
+    # Copy the original file
+    shutil.copyfile(temp_plt, temp_plt + ".orig")
+    # Run the VFD
+    vfd.create_scripts(temp_vfd, run=True, blocking=True, export_format=export_format)
+    # Compare the files
+    assert filecmp.cmp(temp_plt, temp_plt + ".orig")
