@@ -153,7 +153,11 @@ class Builder:
             return plt.title(title, *args)
 
     def legend(self, *args, **kwargs):
-        # TODO: Parse args.
+        try:
+            self.data["legendtitle"] = kwargs["title"]
+        except KeyError:
+            pass
+        # TODO: Parse other args.
         if self.to_matplotlib:
             return plt.legend(*args, **kwargs)
 
