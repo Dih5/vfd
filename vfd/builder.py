@@ -3,6 +3,7 @@ from os import path
 import math
 import tempfile
 import subprocess
+from numbers import Number
 
 import matplotlib.pyplot as plt
 
@@ -106,6 +107,35 @@ class Builder:
             self.data["series"] = [new_series]
         else:
             self.data["series"].append(new_series)
+
+    def errorbar(self, x, y, yerr=None, xerr=None, **kwargs):
+        self.data["type"] = "plot"
+        new_series = {"x": x, "y": y}
+        if yerr:
+            if isinstance(yerr, Number):
+                new_series["yerr"] = _ensure_normal_type([yerr] * len(y))[0]
+            elif isinstance(yerr[0], Number):
+                new_series["yerr"] = _ensure_normal_type(yerr)[0]
+            else:
+                new_series["ymax"] = _ensure_normal_type([y0 + err for y0, err in zip(y, yerr[0])])[0]
+                new_series["ymin"] = _ensure_normal_type([y0 - err for y0, err in zip(y, yerr[1])])[0]
+
+        if xerr:
+            if isinstance(xerr, Number):
+                new_series["xerr"] = _ensure_normal_type([xerr] * len(x))[0]
+            elif isinstance(xerr[0], Number):
+                new_series["xerr"] = _ensure_normal_type(xerr)[0]
+            else:
+                new_series["xmax"] = _ensure_normal_type([y0 + err for y0, err in zip(x, xerr[0])])[0]
+                new_series["xmin"] = _ensure_normal_type([y0 - err for y0, err in zip(x, xerr[1])])[0]
+
+        if "series" not in self.data:
+            self.data["series"] = [new_series]
+        else:
+            self.data["series"].append(new_series)
+
+        if self.to_matplotlib:
+            return plt.errorbar(x, y, yerr=None, xerr=None, **kwargs)
 
     def xlabel(self, label, **kwargs):
         self.data["xlabel"] = label

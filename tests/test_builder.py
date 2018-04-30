@@ -52,3 +52,14 @@ def test_builder_runs(tmpdir):
     vfd.create_scripts(temp_vfd, run=True, blocking=True, export_format=export_format)
     # Compare the files
     assert filecmp.cmp(temp_plt, temp_plt + ".orig")
+
+
+def test_errobar():
+    p = builder.Builder()
+    p.errorbar([1, 2, 3], [1, 4, 9], yerr=1)
+    assert p.data["series"][-1]["yerr"] == [1, 1, 1]
+    p.errorbar([1, 2, 3], [1, 4, 9], yerr=[1, 1.5, 3])
+    assert p.data["series"][-1]["yerr"] == [1, 1.5, 3]
+    p.errorbar([1, 2, 3], [1, 4, 9], yerr=[[0.1, 0.2, 0.3], [0.2, 0.3, 0.4]])
+    assert p.data["series"][-1]["ymax"] == [1.1, 4.2, 9.3]
+    assert p.data["series"][-1]["ymin"] == [0.8, 3.7, 8.6]
