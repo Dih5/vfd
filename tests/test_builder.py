@@ -23,17 +23,8 @@ def test_ensure_normal_type():
     assert ([1, 2],) == builder._ensure_normal_type([1, np.inf, 2])
 
     # Non finite Python types
-    try:
-        nan_list = [1, math.nan, 2]
-        assert ([1, 2],) == builder._ensure_normal_type(nan_list)
-    except AttributeError:  # Old python with no nan in math
-        pass
-
-    try:
-        inf_list = [1, math.inf, 2]
-        assert ([1, 2],) == builder._ensure_normal_type(inf_list)
-    except AttributeError:  # Old python with no nan in math
-        pass
+    assert ([1, 2],) == builder._ensure_normal_type([1, float('nan'), 2])
+    assert ([1, 2],) == builder._ensure_normal_type([1, float('inf'), 2])
 
     # Two lists
     assert ([1, 2], [3, 4]) == builder._ensure_normal_type([1, 2], [3, 4])
