@@ -157,6 +157,26 @@ class Builder:
         if self.to_matplotlib:
             return plt.legend(*args, **kwargs)
 
+    def ylim(self, *args, **kwargs):
+        if len(args) == 2:
+            self.data["ylim"] = args
+        elif len(args) == 1:
+            self.data["ylim"] = args[0]
+        # TODO: Parse kwargs
+        if self.to_matplotlib:
+            return plt.ylim(*args, **kwargs)
+        pass
+
+    def xlim(self, *args, **kwargs):
+        if len(args) == 2:
+            self.data["xlim"] = args
+        elif len(args) == 1:
+            self.data["xlim"] = args[0]
+        # TODO: Parse kwargs
+        if self.to_matplotlib:
+            return plt.xlim(*args, **kwargs)
+        pass
+
     def to_json(self):
         return json.dumps(self.data, sort_keys=True, indent=4, separators=(',', ': '))
 
