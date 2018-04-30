@@ -14,6 +14,10 @@ def test_ensure_normal_type():
     assert ([1, 2],) == builder._ensure_normal_type(np.arange(1, 3))
     assert type(builder._ensure_normal_type(np.arange(1, 3))[0]) == list
     assert ([1, 2],) == builder._ensure_normal_type([1, np.nan, 2])
-    assert ([1, 2],) == builder._ensure_normal_type([1, math.nan, 2])
+    try:
+        nan_list = builder._ensure_normal_type([1, math.nan, 2])
+        assert ([1, 2],) == builder._ensure_normal_type(nan_list)
+    except AttributeError:  # Old python with no nan in math
+        pass
     assert ([1, 2], [3, 4]) == builder._ensure_normal_type([1, 2], [3, 4])
     assert ([1, 2], [10, 20]) == builder._ensure_normal_type([1, np.nan, 2], [10, 13, 20])
