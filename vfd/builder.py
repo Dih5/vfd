@@ -18,13 +18,10 @@ try:
     def _ensure_normal_type(*lists):
         """Make sure lists of data are regular python"""
         ret = tuple([[] for _ in range(len(lists))])
-        numpy_types = [isinstance(i, np.generic) for i in next(zip(*lists))]
         for items in zip(*lists):
-            if any(np.isnan(x) for x in items):
-                pass
-            else:
+            if np.isfinite(items).all():
                 for pos, i in enumerate(items):
-                    if numpy_types[pos]:
+                    if isinstance(i, np.generic):
                         ret[pos].append(np.asscalar(i))
                     else:
                         ret[pos].append(i)
@@ -37,7 +34,7 @@ except ImportError:
         """Make sure lists of data are regular python"""
         ret = tuple([[] for _ in range(len(lists))])
         for items in zip(*lists):
-            if any(math.isnan(x) for x in items):
+            if any(math.isnan(x) or math.isinf(x) for x in items):
                 pass
             else:
                 for pos, i in enumerate(items):
