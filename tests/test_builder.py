@@ -63,3 +63,24 @@ def test_errobar():
     p.errorbar([1, 2, 3], [1, 4, 9], yerr=[[0.1, 0.2, 0.3], [0.2, 0.3, 0.4]])
     assert p.data["series"][-1]["ymax"] == [1.1, 4.2, 9.3]
     assert p.data["series"][-1]["ymin"] == [0.8, 3.7, 8.6]
+
+
+def test_colorplot():
+    """Test colorplot are generated"""
+    z = [[1, 2, 3], [4, 5, 6]]
+    for f in ["contour", "contourf", "pcolor", "pcolormesh"]:
+        p = builder.Builder()
+        getattr(p, f)(z)
+        assert p.data["type"] == "colorplot"
+        assert p.data["z"] == z
+
+    x = [5, 6, 7]
+    y = [10, 11]
+
+    for f in ["contour", "contourf", "pcolor", "pcolormesh"]:
+        p = builder.Builder()
+        getattr(p, f)(x, y, z)
+        assert p.data["type"] == "colorplot"
+        assert p.data["x"] == x
+        assert p.data["y"] == y
+        assert p.data["z"] == z

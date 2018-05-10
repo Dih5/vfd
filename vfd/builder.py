@@ -192,6 +192,40 @@ class Builder:
             return plt.xlim(*args, **kwargs)
         pass
 
+    def contour(self, *args, **kwargs):
+        self._colorplot(*args)
+        if self.to_matplotlib:
+            return plt.contour(*args, **kwargs)
+
+    def contourf(self, *args, **kwargs):
+        self._colorplot(*args)
+        if self.to_matplotlib:
+            return plt.contourf(*args, **kwargs)
+
+    def pcolor(self, *args, **kwargs):
+        self._colorplot(*args)
+        if self.to_matplotlib:
+            return plt.pcolor(*args, **kwargs)
+
+    def pcolormesh(self, *args, **kwargs):
+        self._colorplot(*args)
+        if self.to_matplotlib:
+            return plt.pcolormesh(*args, **kwargs)
+
+    def _colorplot(self, *args):
+        # TODO: Dimension of X,Y in pcolor/pcolormesh might be + 1 (and should!)
+        # That must be parsed
+        if len(args) in [1, 2]:
+            self.data["type"] = "colorplot"
+            self.data["z"] = args[0]
+        elif len(args) in [3, 4]:
+            self.data["type"] = "colorplot"
+            self.data["x"] = args[0]
+            self.data["y"] = args[1]
+            self.data["z"] = args[2]
+        else:
+            raise ValueError("Bad argument number")
+
     def to_json(self):
         return json.dumps(self.data, sort_keys=True, indent=4, separators=(',', ': '))
 
