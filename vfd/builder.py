@@ -1,3 +1,5 @@
+from __future__ import division
+
 import json
 from os import path
 import math
@@ -269,3 +271,38 @@ class Builder:
 
         else:
             raise AttributeError("Builder has no attribute '%s'" % name)
+
+
+class AxesBuilder:
+    def __init__(self, axes=None):
+        self.axes = axes
+        self.data = {"type": "plot"}
+
+    def plot(self, *args, **kwargs):
+        self._plot(*args, **kwargs)
+        if self.axes is not None:
+            return self.axes.plot(*args, **kwargs)
+
+    def _plot(self, *args, **kwargs):
+        if len(args) == 0:
+            raise TypeError("At least one argument is needed")
+        new_series = {}
+        if len(args) == 1:
+            new_series["y"] = _ensure_normal_type(args[0])[0]
+        else:
+            new_series["x"], new_series["y"] = _ensure_normal_type(args[0], args[1])
+        if "label" in kwargs:
+            new_series["label"] = kwargs["label"]
+
+        if "series" not in self.data:
+            self.data["series"] = [new_series]
+        else:
+            self.data["series"].append(new_series)
+
+    def __getattr__(self, name):
+        if self.axes is not None:
+            logger.warning("Attribute '%s' no parsed by AxesBuilder" % name)
+            return getattr(plt, name)
+
+        else:
+            raise AttributeError("AxesBuilder has no attribute '%s'" % name)
