@@ -223,7 +223,7 @@ class Builder:
 
     def __getattr__(self, name):
         if self.to_matplotlib:
-            logger.warning("Attribute '%s' no parsed by Builder")
+            logger.warning("Attribute '%s' no parsed by Builder" % name)
             return getattr(plt, name)
 
         else:
