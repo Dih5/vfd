@@ -209,3 +209,10 @@ class Builder:
 
         if self.to_matplotlib:
             return plt.savefig(fname)
+
+    def __getattr__(self, name):
+        if self.to_matplotlib:
+            return getattr(plt, name)
+
+        else:
+            raise AttributeError("Builder has no attribute '%s'" % name)
