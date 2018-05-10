@@ -4,6 +4,7 @@ import math
 import tempfile
 import subprocess
 from numbers import Number
+import logging
 
 import matplotlib.pyplot as plt
 
@@ -11,6 +12,9 @@ try:
     import itertools.izip as zip
 except ImportError:
     pass
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.Logger("vfd")
 
 try:
     import numpy as np
@@ -212,6 +216,7 @@ class Builder:
 
     def __getattr__(self, name):
         if self.to_matplotlib:
+            logger.warning("Attribute '%s' no parsed by Builder")
             return getattr(plt, name)
 
         else:
