@@ -110,6 +110,38 @@ schema_multiplot = {
     "required": ["plots"]
 }
 
+schema_colorplot = {
+    "type": "object",
+    "properties": {
+        "type": {"Description": "Reserved keyword. Must be \"colorplot\"", "type": "string"},
+        "version": {"Description": "vfd file format version. Reserved for future use", "type": "string"},
+        "xrange": {"Description": "Range of representation in the x-axis", "type": "array", "minItems": 2,
+                   "maxItems": 2, "items": {"type": "number"}},
+        "yrange": {"Description": "Range of representation in the y-axis", "type": "array", "minItems": 2,
+                   "maxItems": 2, "items": {"type": "number"}},
+        "xlog": {"Description": "Whether the scale should be logarithmic in the x-axis", "type": "boolean"},
+        "ylog": {"Description": "Whether the scale should be logarithmic in the y-axis", "type": "boolean"},
+        "xlabel": {"Description": "Label for the x-axis", "type": "string"},
+        "ylabel": {"Description": "Label for the y-axis", "type": "string"},
+        "title": {"Description": "Title for the plot", "type": "string"},
+        "x": {"description": "x-coordinates of the mesh of the plot. Assumed integers from 1 if not given",
+              "type": "array",
+              "items": {"type": "number"},
+              },
+        "y": {"description": "y-coordinates of the mesh of the plot. Assumed integers from 1 if not given",
+              "type": "array",
+              "items": {"type": "number"},
+              },
+        "z": {"description": "Matrix of values to plot",
+              "type": "array",
+              "items": {"type": "array", "items": {"type": "number"}},
+              },
+
+        "style": schema_style,
+    },
+    "required": ["z"]
+}
+
 
 def _cycle_property(index, property_list):
     return property_list[index % len(property_list)]
@@ -327,6 +359,43 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
     return code
 
 
+def _create_matplotlib_colorplot(description, container="plt", current_axes=True, indentation_level=0,
+                                 _indentation_size=4):
+    """
+    Create code describing a simple plot.
+
+    Args:
+        description (dict): A part of VFD of type "colorplot", parsed from the JSON.
+        container (str): The object whose methods are called. E.g., 'plt' for pyplot or an axes.
+        current_axes (bool): Whether to call the set_* methods of the container or the current axes methods (for 'plt').
+        indentation_level: Indentation level for the code.
+        _indentation_size: Number of spaces per indent.
+
+    Returns:
+        str: Python code which will create the plot.
+
+    """
+    code = ""
+    indentation = " " * (indentation_level * _indentation_size)
+    # TODO: This is a stub
+    if "x" and "y" in description:
+        code += indentation + container + '.contourf(%s,%s,%s)\n' % (description["x"], description["y"],
+                                                                     description["z"])
+    else:
+        code += indentation + container + '.contourf(%s)\n' % (description["z"])
+
+    if "xlabel" in description:
+        code += indentation + container + ('.' if current_axes else '.set_') + 'xlabel(%s)\n' % _to_code_string(
+            description["xlabel"])
+    if "ylabel" in description:
+        code += indentation + container + ('.' if current_axes else '.set_') + 'ylabel(%s)\n' % _to_code_string(
+            description["ylabel"])
+    if "title" in description and description["title"]:
+        code += indentation + container + ('.' if current_axes else '.set_') + 'title(%s)\n' % _to_code_string(
+            description["title"])
+    return code
+
+
 def create_matplotlib_script(description, export_name="untitled", _indentation_size=4, context=None, export_format=None,
                              marker_list=None, color_list=None, line_list=None, tight_layout=None):
     """
@@ -426,7 +495,11 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
         except KeyError:
             pass
 
-
+    elif description["type"] == "colorplot":
+        code += _create_matplotlib_colorplot(description, indentation_level=indentation_level,
+                                             _indentation_size=_indentation_size)
+        if tight_layout:
+            code += indentation + "plt.tight_layout()\n"
 
     else:
         raise ValueError("Unknown plot type: %s" % description["type"])
@@ -476,6 +549,8 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
                 validate_schema(description, schema_plot)
             elif description["type"] == "multiplot":
                 validate_schema(description, schema_multiplot)
+            elif description["type"] == "colorplot":
+                validate_schema(description, schema_colorplot)
             else:
                 raise ValueError("Unknown type: %s" % description["type"])
             output.write(create_matplotlib_script(description, export_name=basename, **kwargs))
