@@ -84,3 +84,15 @@ def test_colorplot():
         assert p.data["x"] == x
         assert p.data["y"] == y
         assert p.data["z"] == z
+
+    # Test with pcolor meshes with N+1 points
+    x = [5, 6, 7, 8]
+    y = [10, 11, 12]
+
+    for f in ["pcolor", "pcolormesh"]:
+        p = builder.Builder()
+        getattr(p, f)(x, y, z)
+        assert p.data["type"] == "colorplot"
+        assert p.data["x"] == [5.5, 6.5, 7.5]
+        assert p.data["y"] == [10.5, 11.5]
+        assert p.data["z"] == z

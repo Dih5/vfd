@@ -213,16 +213,23 @@ class Builder:
             return plt.pcolormesh(*args, **kwargs)
 
     def _colorplot(self, *args):
-        # TODO: Dimension of X,Y in pcolor/pcolormesh might be + 1 (and should!)
-        # That must be parsed
-        if len(args) in [1, 2]:
+        if len(args) in [1, 2]:  # 2nd argument might be in the signature of contour/contourf
             self.data["type"] = "colorplot"
             self.data["z"] = args[0]
-        elif len(args) in [3, 4]:
+        elif len(args) in [3, 4]:  # 4th argument might be in the signature of contour/contourf
+            x, y, z = args[0:3]
+            # Dimensions of X,Y in pcolor/pcolormesh might be those of Z + 1 (in fact, they should)
+            # Use an average if that is the case
+            if len(x) == len(z[0]) + 1:
+                x = [(a + b) / 2 for a, b in zip(x[1:], x[:-1])]
+
+            if len(y) == len(z) + 1:
+                y = [(a + b) / 2 for a, b in zip(y[1:], y[:-1])]
+
             self.data["type"] = "colorplot"
-            self.data["x"] = args[0]
-            self.data["y"] = args[1]
-            self.data["z"] = args[2]
+            self.data["x"] = x
+            self.data["y"] = y
+            self.data["z"] = z
         else:
             raise ValueError("Bad argument number")
 
