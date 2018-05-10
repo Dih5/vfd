@@ -6,7 +6,10 @@ import subprocess
 from numbers import Number
 import logging
 
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except ModuleNotFoundError:
+    plt = None
 
 try:
     import itertools.izip as zip
@@ -63,7 +66,11 @@ class Builder:
 
         """
         self.data = {}
-        self.to_matplotlib = to_matplotlib
+        if plt is None and to_matplotlib:
+            logger.warning("Matplotlib not available")
+            self.to_matplotlib = False
+        else:
+            self.to_matplotlib = to_matplotlib
 
     def __enter__(self):
         return self
