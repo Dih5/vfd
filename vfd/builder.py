@@ -333,7 +333,7 @@ class Builder:
 
     def __getattr__(self, name):
         if self.to_matplotlib:
-            logger.warning("Attribute '%s' no parsed by Builder" % name)
+            logger.warning("Attribute '%s' is not parsed by Builder" % name)
             return getattr(plt, name)
 
         else:
@@ -495,8 +495,8 @@ class AxesBuilder:
 
     def __getattr__(self, name):
         if self.axes is not None:
-            logger.warning("Attribute '%s' no parsed by AxesBuilder" % name)
-            return getattr(plt, name)
+            logger.warning("Attribute '%s' is not parsed by AxesBuilder" % name)
+            return getattr(self.axes, name)
 
         else:
             raise AttributeError("AxesBuilder has no attribute '%s'" % name)
