@@ -297,6 +297,13 @@ class Builder:
         else:
             return fig, self._subplots
 
+    def text(self, x, y, s, **kwargs):
+        if "epilog" not in self.data:
+            self.data["epilog"] = []
+        self.data["epilog"].append({"type": "text", "x": x, "y": y, "text": s})
+        if self.to_matplotlib:
+            return plt.text(x, y, s, **kwargs)
+
     def get_data(self):
         if self._subplots is not None:
             self.data["plots"] = [[x.data for x in row] for row in self._subplots]
@@ -515,6 +522,13 @@ class AxesBuilder:
             self.data["z"] = z
         else:
             raise ValueError("Bad argument number")
+
+    def text(self, x, y, s, **kwargs):
+        if "epilog" not in self.data:
+            self.data["epilog"] = []
+        self.data["epilog"].append({"type": "text", "x": x, "y": y, "text": s})
+        if self.axes is not None:
+            return self.axes.text(x, y, s, **kwargs)
 
     def __getattr__(self, name):
         if self.axes is not None:

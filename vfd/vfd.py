@@ -142,6 +142,8 @@ schema_colorplot = {
     "required": ["z"]
 }
 
+# TODO: Add epilog to schemas
+
 
 def _cycle_property(index, property_list):
     return property_list[index % len(property_list)]
@@ -356,6 +358,14 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
         else:
             code += indentation + container + ('.' if current_axes else '.set_') + 'title(%s)\n' % _to_code_string(
                 description["title"])
+    if "epilog" in description:
+        for directive in description["epilog"]:
+            if directive["type"] == "text":
+                code += indentation + container + ".text(%f, %f, %s)\n" % (
+                        directive["x"], directive["y"], _to_code_string(directive["text"]))
+                pass
+            else:
+                raise ValueError("Unkown epilog directive: " + directive["type"])
     return code
 
 
