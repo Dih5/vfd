@@ -353,15 +353,15 @@ class AxesBuilder:
     def semilogy(self, *args, **kwargs):
         self.data["ylog"] = True
         self._plot(*args, **kwargs)
-        if self.to_matplotlib:
-            return plt.semilogy(*args, **kwargs)
+        if self.axes is not None:
+            return self.axes.semilogy(*args, **kwargs)
 
     def loglog(self, *args, **kwargs):
         self.data["xlog"] = True
         self.data["ylog"] = True
         self._plot(*args, **kwargs)
-        if self.to_matplotlib:
-            return plt.loglog(*args, **kwargs)
+        if self.axes is not None:
+            return self.axes.loglog(*args, **kwargs)
 
     def errorbar(self, x, y, yerr=None, xerr=None, **kwargs):
         self.data["type"] = "plot"
@@ -389,8 +389,8 @@ class AxesBuilder:
         else:
             self.data["series"].append(new_series)
 
-        if self.to_matplotlib:
-            return plt.errorbar(x, y, yerr=None, xerr=None, **kwargs)
+        if self.axes is not None:
+            return self.axes.errorbar(x, y, yerr=None, xerr=None, **kwargs)
 
     def _plot(self, *args, **kwargs):
         if len(args) == 0:
@@ -410,18 +410,18 @@ class AxesBuilder:
 
     def set_xlabel(self, label, **kwargs):
         self.data["xlabel"] = label
-        if self.to_matplotlib:
-            return plt.xlabel(label, **kwargs)
+        if self.axes is not None:
+            return self.axes.set_xlabel(label, **kwargs)
 
     def set_ylabel(self, label, **kwargs):
         self.data["ylabel"] = label
-        if self.to_matplotlib:
-            return plt.ylabel(label, **kwargs)
+        if self.axes is not None:
+            return self.axes.set_ylabel(label, **kwargs)
 
     def set_title(self, title, *args):
         self.data["title"] = title
-        if self.to_matplotlib:
-            return plt.title(title, *args)
+        if self.axes is not None:
+            return self.axes.set_title(title, *args)
 
     def legend(self, *args, **kwargs):
         try:
@@ -429,8 +429,8 @@ class AxesBuilder:
         except KeyError:
             pass
         # TODO: Parse other args.
-        if self.to_matplotlib:
-            return plt.legend(*args, **kwargs)
+        if self.axes is not None:
+            return self.axes.legend(*args, **kwargs)
 
     def set_ylim(self, *args, **kwargs):
         if len(args) == 2:
@@ -438,8 +438,8 @@ class AxesBuilder:
         elif len(args) == 1:
             self.data["yrange"] = args[0]
         # TODO: Parse kwargs
-        if self.to_matplotlib:
-            return plt.ylim(*args, **kwargs)
+        if self.axes is not None:
+            return self.axes.set_ylim(*args, **kwargs)
         pass
 
     def set_xlim(self, *args, **kwargs):
@@ -448,29 +448,29 @@ class AxesBuilder:
         elif len(args) == 1:
             self.data["xrange"] = args[0]
         # TODO: Parse kwargs
-        if self.to_matplotlib:
-            return plt.xlim(*args, **kwargs)
+        if self.axes is not None:
+            return self.axes.set_xlim(*args, **kwargs)
         pass
 
     def contour(self, *args, **kwargs):
         self._colorplot(*args)
-        if self.to_matplotlib:
-            return plt.contour(*args, **kwargs)
+        if self.axes is not None:
+            return self.axes.contour(*args, **kwargs)
 
     def contourf(self, *args, **kwargs):
         self._colorplot(*args)
-        if self.to_matplotlib:
-            return plt.contourf(*args, **kwargs)
+        if self.axes is not None:
+            return self.axes.contourf(*args, **kwargs)
 
     def pcolor(self, *args, **kwargs):
         self._colorplot(*args)
-        if self.to_matplotlib:
-            return plt.pcolor(*args, **kwargs)
+        if self.axes is not None:
+            return self.axes.pcolor(*args, **kwargs)
 
     def pcolormesh(self, *args, **kwargs):
         self._colorplot(*args)
-        if self.to_matplotlib:
-            return plt.pcolormesh(*args, **kwargs)
+        if self.axes is not None:
+            return self.axes.pcolormesh(*args, **kwargs)
 
     def _colorplot(self, *args):
         if len(args) in [1, 2]:  # 2nd argument might be in the signature of contour/contourf
