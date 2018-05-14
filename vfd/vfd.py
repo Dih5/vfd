@@ -365,7 +365,7 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
                         directive["x"], directive["y"], _to_code_string(directive["text"]))
                 pass
             else:
-                raise ValueError("Unkown epilog directive: " + directive["type"])
+                raise ValueError("Unknown epilog directive: " + directive["type"])
     return code
 
 
