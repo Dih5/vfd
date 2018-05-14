@@ -7,6 +7,7 @@ import tempfile
 import subprocess
 from numbers import Number
 import logging
+import re
 
 try:
     import matplotlib.pyplot as plt
@@ -302,8 +303,30 @@ class Builder:
 
         return self.data
 
-    def to_json(self):
-        return json.dumps(self.get_data(), sort_keys=True, indent=4, separators=(',', ': '))
+    def to_json(self, compact=False, compact_arrays=True):
+        """
+        Return a JSON representation of the data.
+
+        Args:
+            compact (bool): Whether to save space in detriment of readability.
+            compact_arrays (bool): If compact was False, whether to make 1d arrays of numbers compact.
+                                   This both improves readability and saves space.
+
+        Returns:
+            str: A JSON representation of the data.
+
+        """
+        if compact:
+            my_json = json.dumps(self.get_data(), sort_keys=True, separators=(',', ':'))
+        else:
+            my_json = json.dumps(self.get_data(), sort_keys=True, indent=4, separators=(',', ': '))
+            if compact_arrays:
+                # numbers in an array should join in one line
+                # "number   ,  " into "number,":
+                my_json = re.sub(r"([0-9]*.?[0-9]+.?)\s*([,\]])\s*", r"\g<1>\g<2>", my_json)
+                # "[   number" into "[number":
+                my_json = re.sub(r"\[\s*([0-9]*.?[0-9]+.?)\s*", r"[\g<1>", my_json)
+        return my_json
 
     def show(self):
         # TODO: Doesn't work from Jupyter
