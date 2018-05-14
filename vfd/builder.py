@@ -161,6 +161,9 @@ class Builder:
                 new_series["xmax"] = _ensure_normal_type([y0 + err for y0, err in zip(x, xerr[0])])[0]
                 new_series["xmin"] = _ensure_normal_type([y0 - err for y0, err in zip(x, xerr[1])])[0]
 
+        if "label" in kwargs:
+            new_series["label"] = kwargs["label"]
+
         if "series" not in self.data:
             self.data["series"] = [new_series]
         else:
@@ -418,6 +421,9 @@ class AxesBuilder:
             else:
                 new_series["xmax"] = _ensure_normal_type([y0 + err for y0, err in zip(x, xerr[0])])[0]
                 new_series["xmin"] = _ensure_normal_type([y0 - err for y0, err in zip(x, xerr[1])])[0]
+
+        if "label" in kwargs:
+            new_series["label"] = kwargs["label"]
 
         if "series" not in self.data:
             self.data["series"] = [new_series]
