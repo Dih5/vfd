@@ -142,6 +142,7 @@ schema_colorplot = {
     "required": ["z"]
 }
 
+
 # TODO: Add epilog to schemas
 
 
@@ -362,7 +363,7 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
         for directive in description["epilog"]:
             if directive["type"] == "text":
                 code += indentation + container + ".text(%f, %f, %s)\n" % (
-                        directive["x"], directive["y"], _to_code_string(directive["text"]))
+                    directive["x"], directive["y"], _to_code_string(directive["text"]))
                 pass
             else:
                 raise ValueError("Unknown epilog directive: " + directive["type"])
@@ -407,7 +408,8 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
 
 
 def create_matplotlib_script(description, export_name="untitled", _indentation_size=4, context=None, export_format=None,
-                             marker_list=None, color_list=None, line_list=None, tight_layout=None):
+                             marker_list=None, color_list=None, line_list=None, tight_layout=None,
+                             scale_multiplot=False):
     """
     Create a matplotlib script to plot the VFD with the given description.
 
@@ -421,6 +423,7 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
         color_list (list): Colors to use when an index requests to do so.
         line_list (list of str): Line styles to use when requested.
         tight_layout (bool): Use the tight_layout function to fit the plot.
+        scale_multiplot (bool): Whether to automatically increase the size of multiplots.
 
     Returns:
         str: Python code which will create the plot.
@@ -459,11 +462,15 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
     elif description["type"] == "multiplot":
         plots_ver = len(description["plots"])
         plots_hor = len(description["plots"][0])
+        if scale_multiplot:
+            code += indentation + "size_x, size_y= plt.rcParams.get('figure.figsize')\n"
         code += indentation + "fig, axarr = plt.subplots(%d, %d" % (plots_ver, plots_hor)  # Note unfinished line
         if "xshared" in description:
             code += ', sharex="%s"' % description["xshared"]
         if "yshared" in description:
             code += ', sharey="%s"' % description["yshared"]
+        if scale_multiplot:
+            code += ", figsize=(%d * size_x, %d * size_y)" % (plots_hor, plots_ver)
         code += ")\n"
 
         if plots_hor == 1 and plots_ver == 1:
