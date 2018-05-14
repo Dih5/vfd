@@ -96,3 +96,42 @@ def test_colorplot():
         assert p.data["x"] == [5.5, 6.5, 7.5]
         assert p.data["y"] == [10.5, 11.5]
         assert p.data["z"] == z
+
+
+def test_multiplot():
+    """Test multiplot functionality"""
+    # Just check subplot properties are retrieved by the main instance
+    p = builder.Builder()
+    fig, axes = p.subplots(1, 1)
+    axes.plot([1, 2, 3])
+    data = p.get_data()
+    assert data["plots"][0][0]["series"][0]["y"] == [1, 2, 3]
+
+    p = builder.Builder()
+    fig, axes = p.subplots(2, 1)  # 2 rows, 1 col
+    axes[0].plot([1, 2, 3])
+    axes[1].plot([2, 3, 4])
+    data = p.get_data()
+    assert data["plots"][0][0]["series"][0]["y"] == [1, 2, 3]
+    assert data["plots"][1][0]["series"][0]["y"] == [2, 3, 4]
+
+    p = builder.Builder()
+    fig, axes = p.subplots(2, 1, squeeze=False)  # 2 rows, 1 col
+    axes[0][0].plot([1, 2, 3])
+    axes[1][0].plot([2, 3, 4])
+    data = p.get_data()
+    assert data["plots"][0][0]["series"][0]["y"] == [1, 2, 3]
+    assert data["plots"][1][0]["series"][0]["y"] == [2, 3, 4]
+
+    p = builder.Builder()
+    fig, axes = p.subplots(2, 2, sharex=True)  # 2 rows, 2 col
+    axes[0][0].plot([1, 2, 3])
+    axes[1][0].plot([2, 3, 4])
+    axes[0][1].plot([3, 4, 5])
+    axes[1][1].plot([4, 5, 6])
+    data = p.get_data()
+    assert data["plots"][0][0]["series"][0]["y"] == [1, 2, 3]
+    assert data["plots"][1][0]["series"][0]["y"] == [2, 3, 4]
+    assert data["plots"][0][1]["series"][0]["y"] == [3, 4, 5]
+    assert data["plots"][1][1]["series"][0]["y"] == [4, 5, 6]
+    assert data["xshared"] == "all"
