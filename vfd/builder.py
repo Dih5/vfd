@@ -303,7 +303,7 @@ class Builder:
         return self.data
 
     def to_json(self):
-        return json.dumps(self.data, sort_keys=True, indent=4, separators=(',', ': '))
+        return json.dumps(self.get_data, sort_keys=True, indent=4, separators=(',', ': '))
 
     def show(self):
         # TODO: Doesn't work from Jupyter
