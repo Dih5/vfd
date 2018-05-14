@@ -123,8 +123,11 @@ in your local repo to find a set of Very Fitting Directives.
 
 To run a subset of tests::
 
-    $ py.test tests/test_vfd
+    $ py.test tests/test_foo.py
 
+To run a single test::
+
+    $ py.test tests/test_foo.py::test_bar
 
 Deploying
 ---------
