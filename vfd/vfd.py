@@ -401,11 +401,15 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
             except KeyError:
                 pass
 
+    # Store the ContourSet to label it later
+    code += indentation
+    if plot_f == "contour":
+        code += "cs = "
+
     if "x" and "y" in description:
-        code += indentation + container + '.%s(%s,%s,%s)\n' % (plot_f, description["x"],
-                                                               description["y"], description["z"])
+        code += container + '.%s(%s,%s,%s)\n' % (plot_f, description["x"], description["y"], description["z"])
     else:
-        code += indentation + container + '.%s(%s)\n' % (plot_f, description["z"])
+        code += container + '.%s(%s)\n' % (plot_f, description["z"])
 
     try:
         if description["xlog"]:
@@ -430,6 +434,12 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
     if "title" in description and description["title"]:
         code += indentation + container + ('.' if current_axes else '.set_') + 'title(%s)\n' % _to_code_string(
             description["title"])
+
+    # If contour lines, label them. Otherwise, add the colorbar.
+    if plot_f == "contour":
+        code += indentation + "plt.clabel(cs)\n"
+    else:
+        code += indentation + "plt.colorbar()\n"
     return code
 
 
