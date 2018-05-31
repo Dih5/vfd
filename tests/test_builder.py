@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 """Tests for the builder module."""
-import math
 import os
 import shutil
 import filecmp
