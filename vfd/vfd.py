@@ -402,8 +402,8 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
                 pass
 
     if "x" and "y" in description:
-        code += indentation + container + '.%s(%s,%s,%s)\n' % (
-                plot_f, description["x"], description["y"], description["z"])
+        code += indentation + container + '.%s(%s,%s,%s)\n' % (plot_f, description["x"],
+                                                               description["y"], description["z"])
     else:
         code += indentation + container + '.%s(%s)\n' % (plot_f, description["z"])
 
