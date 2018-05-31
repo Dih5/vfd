@@ -123,6 +123,8 @@ schema_colorplot = {
         "ylog": {"Description": "Whether the scale should be logarithmic in the y-axis", "type": "boolean"},
         "xlabel": {"Description": "Label for the x-axis", "type": "string"},
         "ylabel": {"Description": "Label for the y-axis", "type": "string"},
+        "contour": {"Description": "Whether contour should be plotted instead of density", "type": "boolean"},
+        "fillcontour": {"Description": "When contour is plotted, whether regions should be filled", "type": "boolean"},
         "title": {"Description": "Title for the plot", "type": "string"},
         "x": {"description": "x-coordinates of the mesh of the plot. Assumed integers from 1 if not given",
               "type": "array",
@@ -388,12 +390,21 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
     """
     code = ""
     indentation = " " * (indentation_level * _indentation_size)
-    # TODO: This is a stub
+    plot_f = "pcolormesh"
+    if "contour" in description:
+        if description["contour"]:
+            plot_f = "contour"
+            try:
+                if description["fillcontour"]:
+                    plot_f = "contourf"
+            except KeyError:
+                pass
+
     if "x" and "y" in description:
-        code += indentation + container + '.contourf(%s,%s,%s)\n' % (description["x"], description["y"],
-                                                                     description["z"])
+        code += indentation + container + '.%s(%s,%s,%s)\n' % (
+                plot_f, description["x"], description["y"], description["z"])
     else:
-        code += indentation + container + '.contourf(%s)\n' % (description["z"])
+        code += indentation + container + '.%s(%s)\n' % (plot_f, description["z"])
 
     if "xlabel" in description:
         code += indentation + container + ('.' if current_axes else '.set_') + 'xlabel(%s)\n' % _to_code_string(
