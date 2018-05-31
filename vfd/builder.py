@@ -65,6 +65,9 @@ def _squeeze_matrix(matrix):
         return matrix
 
 
+_float_pattern = '[-+]?(?:(?:\d*\.\d+)|(?:\d+\.?))(?:[Ee][+-]?\d+)?'
+
+
 # TODO: A lot of repeated code to move to a default Axes object
 
 class Builder:
@@ -157,6 +160,9 @@ class Builder:
             else:
                 new_series["xmax"] = _ensure_normal_type([y0 + err for y0, err in zip(x, xerr[0])])[0]
                 new_series["xmin"] = _ensure_normal_type([y0 - err for y0, err in zip(x, xerr[1])])[0]
+
+        if "label" in kwargs:
+            new_series["label"] = kwargs["label"]
 
         if "series" not in self.data:
             self.data["series"] = [new_series]
@@ -331,9 +337,11 @@ class Builder:
             if compact_arrays:
                 # numbers in an array should join in one line
                 # "number   ,  " into "number,":
-                my_json = re.sub(r"([0-9]*.?[0-9]+.?)\s*([,\]])\s*", r"\g<1>\g<2>", my_json)
-                # "[   number" into "[number":
-                my_json = re.sub(r"\[\s*([0-9]*.?[0-9]+.?)\s*", r"[\g<1>", my_json)
+                my_json = re.sub(r"(%s)\s*([,\]])\s*" % _float_pattern, r"\g<1>\g<2>", my_json)
+                # "[   number  " into "[number":
+                my_json = re.sub(r"\[\s*(%s)\s*" % _float_pattern, r"[\g<1>", my_json)
+                # "  number   ]" into "number]":
+                my_json = re.sub(r"\s*(%s)\s*\]" % _float_pattern, r"\g<1>]", my_json)
         return my_json
 
     def show(self):
@@ -414,6 +422,9 @@ class AxesBuilder:
             else:
                 new_series["xmax"] = _ensure_normal_type([y0 + err for y0, err in zip(x, xerr[0])])[0]
                 new_series["xmin"] = _ensure_normal_type([y0 - err for y0, err in zip(x, xerr[1])])[0]
+
+        if "label" in kwargs:
+            new_series["label"] = kwargs["label"]
 
         if "series" not in self.data:
             self.data["series"] = [new_series]
