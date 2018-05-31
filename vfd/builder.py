@@ -233,7 +233,7 @@ class Builder:
     def _colorplot(self, *args):
         if len(args) in [1, 2]:  # 2nd argument might be in the signature of contour/contourf
             self.data["type"] = "colorplot"
-            self.data["z"] = args[0]
+            self.data["z"] = _ensure_normal_type(args[0])[0]
         elif len(args) in [3, 4]:  # 4th argument might be in the signature of contour/contourf
             x, y, z = args[0:3]
             # Dimensions of X,Y in pcolor/pcolormesh might be those of Z + 1 (in fact, they should)
@@ -245,9 +245,10 @@ class Builder:
                 y = [(a + b) / 2 for a, b in zip(y[1:], y[:-1])]
 
             self.data["type"] = "colorplot"
-            self.data["x"] = x
-            self.data["y"] = y
-            self.data["z"] = z
+            # TODO: Nan and Inf should be improved
+            self.data["x"] = _ensure_normal_type(x)[0]
+            self.data["y"] = _ensure_normal_type(y)[0]
+            self.data["z"] = _ensure_normal_type(z)[0]
         else:
             raise ValueError("Bad argument number")
 
@@ -505,7 +506,7 @@ class AxesBuilder:
     def _colorplot(self, *args):
         if len(args) in [1, 2]:  # 2nd argument might be in the signature of contour/contourf
             self.data["type"] = "colorplot"
-            self.data["z"] = args[0]
+            self.data["z"] = _ensure_normal_type(args[0])[0]
         elif len(args) in [3, 4]:  # 4th argument might be in the signature of contour/contourf
             x, y, z = args[0:3]
             # Dimensions of X,Y in pcolor/pcolormesh might be those of Z + 1 (in fact, they should)
@@ -517,9 +518,9 @@ class AxesBuilder:
                 y = [(a + b) / 2 for a, b in zip(y[1:], y[:-1])]
 
             self.data["type"] = "colorplot"
-            self.data["x"] = x
-            self.data["y"] = y
-            self.data["z"] = z
+            self.data["x"] = _ensure_normal_type(x)[0]
+            self.data["y"] = _ensure_normal_type(y)[0]
+            self.data["z"] = _ensure_normal_type(z)[0]
         else:
             raise ValueError("Bad argument number")
 
