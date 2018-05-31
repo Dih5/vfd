@@ -121,6 +121,7 @@ schema_colorplot = {
                    "maxItems": 2, "items": {"type": "number"}},
         "xlog": {"Description": "Whether the scale should be logarithmic in the x-axis", "type": "boolean"},
         "ylog": {"Description": "Whether the scale should be logarithmic in the y-axis", "type": "boolean"},
+        "zlog": {"Description": "Whether the color scale should be logarithmic", "type": "boolean"},
         "xlabel": {"Description": "Label for the x-axis", "type": "string"},
         "ylabel": {"Description": "Label for the y-axis", "type": "string"},
         "contour": {"Description": "Whether contour should be plotted instead of density", "type": "boolean"},
@@ -405,6 +406,20 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
                 plot_f, description["x"], description["y"], description["z"])
     else:
         code += indentation + container + '.%s(%s)\n' % (plot_f, description["z"])
+
+    try:
+        if description["xlog"]:
+            code += indentation + 'plt.gca().set_xscale("log")\n'
+    except KeyError:
+        pass
+
+    try:
+        if description["ylog"]:
+            code += indentation + 'plt.gca().set_yscale("log")\n'
+    except KeyError:
+        pass
+
+    # TODO: Add zlog support
 
     if "xlabel" in description:
         code += indentation + container + ('.' if current_axes else '.set_') + 'xlabel(%s)\n' % _to_code_string(
