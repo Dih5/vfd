@@ -14,6 +14,8 @@ default_lines = ['-', '--', ':', '-.']
 
 default_markers = ['o', 's', '^', 'p', 'v', "8"]
 
+_indentation_size = 4
+
 schema_style = {
     "type": "object",
     "properties": {
@@ -224,8 +226,8 @@ def _get_style(description):
     return kwargs
 
 
-def _create_matplotlib_plot(description, container="plt", current_axes=True, indentation_level=0, _indentation_size=4,
-                            marker_list=None, color_list=None, line_list=None, title_inside=False):
+def _create_matplotlib_plot(description, container="plt", current_axes=True, indentation_level=0, marker_list=None,
+                            color_list=None, line_list=None, title_inside=False):
     """
     Create code describing a simple plot.
 
@@ -234,7 +236,6 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
         container (str): The object whose methods are called. E.g., 'plt' for pyplot or an axes.
         current_axes (bool): Whether to call the set_* methods of the container or the current axes methods (for 'plt').
         indentation_level: Indentation level for the code.
-        _indentation_size: Number of spaces per indent.
         marker_list (list of str): Markers to use cyclically for series which are not joined.
         color_list (list): Colors to use when an index requests to do so.
         line_list (list of str): Line styles to use when requested.
@@ -373,8 +374,7 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
     return code
 
 
-def _create_matplotlib_colorplot(description, container="plt", current_axes=True, indentation_level=0,
-                                 _indentation_size=4):
+def _create_matplotlib_colorplot(description, container="plt", current_axes=True, indentation_level=0):
     """
     Create code describing a simple plot.
 
@@ -383,7 +383,6 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
         container (str): The object whose methods are called. E.g., 'plt' for pyplot or an axes.
         current_axes (bool): Whether to call the set_* methods of the container or the current axes methods (for 'plt').
         indentation_level: Indentation level for the code.
-        _indentation_size: Number of spaces per indent.
 
     Returns:
         str: Python code which will create the plot.
@@ -456,7 +455,7 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
     return code
 
 
-def create_matplotlib_script(description, export_name="untitled", _indentation_size=4, context=None, export_format=None,
+def create_matplotlib_script(description, export_name="untitled", context=None, export_format=None,
                              marker_list=None, color_list=None, line_list=None, tight_layout=None,
                              scale_multiplot=False):
     """
@@ -465,7 +464,6 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
     Args:
         description (dict): Description of the VFD, obtained parsing the JSON.
         export_name (str): Name to give to the script file and the plots generated therein.
-        _indentation_size (int): Size of the indentation used.
         context (str):  Matplotlib context to use in the script.
         export_format (str or list of str): Format(s) to export to.
         marker_list (list of str): Markers to use cyclically for series which are not joined.
@@ -502,8 +500,7 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
         indentation = " " * _indentation_size
 
     if description["type"] == "plot":
-        code += _create_matplotlib_plot(description, indentation_level=indentation_level,
-                                        _indentation_size=_indentation_size, marker_list=marker_list,
+        code += _create_matplotlib_plot(description, indentation_level=indentation_level, marker_list=marker_list,
                                         color_list=color_list, line_list=line_list, )
         if tight_layout:
             code += indentation + "plt.tight_layout()\n"
@@ -524,28 +521,27 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
 
         if plots_hor == 1 and plots_ver == 1:
             code += _create_matplotlib_plot(description["plots"][0][0], container="axarr", current_axes=False,
-                                            indentation_level=indentation_level, _indentation_size=_indentation_size,
-                                            marker_list=marker_list, color_list=color_list, line_list=line_list,
-                                            title_inside=True)
+                                            indentation_level=indentation_level, marker_list=marker_list,
+                                            color_list=color_list, line_list=line_list, title_inside=True)
         elif plots_hor == 1:
             for i in range(plots_ver):
                 code += _create_matplotlib_plot(description["plots"][i][0], container="axarr[%d]" % i,
                                                 current_axes=False, indentation_level=indentation_level,
-                                                _indentation_size=_indentation_size, marker_list=marker_list,
-                                                color_list=color_list, line_list=line_list, title_inside=True)
+                                                marker_list=marker_list, color_list=color_list,
+                                                line_list=line_list, title_inside=True)
         elif plots_ver == 1:
             for j in range(plots_hor):
                 code += _create_matplotlib_plot(description["plots"][0][j], container="axarr[%d]" % j,
                                                 current_axes=False, indentation_level=indentation_level,
-                                                _indentation_size=_indentation_size, marker_list=marker_list,
-                                                color_list=color_list, line_list=line_list, title_inside=True)
+                                                marker_list=marker_list, color_list=color_list,
+                                                line_list=line_list, title_inside=True)
         else:
             for i in range(plots_ver):
                 for j in range(plots_hor):
                     code += _create_matplotlib_plot(description["plots"][i][j], container="axarr[%d][%d]" % (i, j),
                                                     current_axes=False, indentation_level=indentation_level,
-                                                    _indentation_size=_indentation_size, marker_list=marker_list,
-                                                    color_list=color_list, line_list=line_list, title_inside=True)
+                                                    marker_list=marker_list, color_list=color_list,
+                                                    line_list=line_list, title_inside=True)
         if "title" in description:
             code += indentation + 'fig.suptitle(%s)\n' % _to_code_string(description["title"])
 
@@ -562,8 +558,7 @@ def create_matplotlib_script(description, export_name="untitled", _indentation_s
             pass
 
     elif description["type"] == "colorplot":
-        code += _create_matplotlib_colorplot(description, indentation_level=indentation_level,
-                                             _indentation_size=_indentation_size)
+        code += _create_matplotlib_colorplot(description, indentation_level=indentation_level)
         if tight_layout:
             code += indentation + "plt.tight_layout()\n"
 
