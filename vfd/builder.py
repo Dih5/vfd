@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""Mimic matplotlib interface to generate VFD files"""
+
 from __future__ import division
 
 import json
@@ -74,8 +77,8 @@ class Builder:
     """
     Class that mimics the behaviour of matplotlib.pyplot to produce vfd files.
 
-    An instance can be used as a context manager: "with Builder() as plt:". However, note this overrides your plt
-    variable.
+    Consider adding "plt=Builder()" in your plotting script to add vfd file generation.
+
     """
 
     def __init__(self, to_matplotlib=True):
@@ -356,6 +359,17 @@ class Builder:
             return plt.show()
 
     def savevfd(self, fname):
+        """
+        Save the data as a vfd file.
+
+        This method is automatically called when savefig is called, so whenever an image is exported, so it is the VFD.
+        However, the original export is not overridden by the created VFD.
+
+        Args:
+            fname: Path where the file will be saved. If the extension is not vfd, it will be changed to it.
+
+
+        """
         if "." in path.basename(fname):  # If has an extension
             fname = fname.rsplit(".", 1)[0]  # Remove it
 
@@ -380,6 +394,10 @@ class Builder:
 
 
 class AxesBuilder:
+    """
+    Class that mimics the behaviour of matplotlib.pyplot.axes to produce vfd files.
+    """
+
     def __init__(self, axes=None):
         self.axes = axes
         self.data = {"type": "plot"}
