@@ -401,15 +401,30 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
             except KeyError:
                 pass
 
+    try:
+        if description["zlog"]:
+            code += indentation + "from matplotlib.colors import LogNorm\n"
+    except KeyError:
+        pass
+
     # Store the ContourSet to label it later
     code += indentation
     if plot_f == "contour":
         code += "cs = "
 
+    # Leave call open for log scale
     if "x" and "y" in description:
-        code += container + '.%s(%s,%s,%s)\n' % (plot_f, description["x"], description["y"], description["z"])
+        code += container + '.%s(%s,%s,%s' % (plot_f, description["x"], description["y"], description["z"])
     else:
-        code += container + '.%s(%s)\n' % (plot_f, description["z"])
+        code += container + '.%s(%s' % (plot_f, description["z"])
+
+    try:
+        if description["zlog"]:
+            code += ", norm=LogNorm()"
+    except KeyError:
+        pass
+
+    code += ')\n'
 
     try:
         if description["xlog"]:
@@ -422,8 +437,6 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
             code += indentation + 'plt.gca().set_yscale("log")\n'
     except KeyError:
         pass
-
-    # TODO: Add zlog support
 
     if "xlabel" in description:
         code += indentation + container + ('.' if current_axes else '.set_') + 'xlabel(%s)\n' % _to_code_string(
