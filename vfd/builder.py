@@ -387,11 +387,11 @@ class Builder:
         with open(fname, "w") as text_file:
             text_file.write(self.to_json())
 
-    def savefig(self, fname):
+    def savefig(self, fname, **kwargs):
         self.savevfd(fname)
 
         if self.to_matplotlib:
-            return plt.savefig(fname)
+            return plt.savefig(fname, **kwargs)
 
     def __getattr__(self, name):
         if self.to_matplotlib:
