@@ -93,25 +93,6 @@ schema_plot = {
     "required": ["series"]
 }
 
-schema_multiplot = {
-    "type": "object",
-    "properties": {
-        "type": {"Description": "Reserved keyword. Must be \"multiplot\"", "type": "string"},
-        "version": {"Description": "vfd file format version. Reserved for future use", "type": "string"},
-        "plots": {
-            "Description": "Bidimensional matrix of plots. Each item of this array is an array with a row of plots",
-            "type": "array",
-            "items": {"type": "array", "items": schema_plot}},
-        "title": {"Description": "Title for the plots", "type": "string"},
-        "xshared": {"Description:": "If x-axis should be shared", "type": "string", "pattern": "^(all|none|row|col)$"},
-        "yshared": {"Description:": "If y-axis should be shared", "type": "string", "pattern": "^(all|none|row|col)$"},
-        "joined": {"Description:": "If the subplots should be adjacent in horizontal and vertical respectively",
-                   "type": "array", "minitems": 2, "maxitems": 2, "items": {"type": "boolean"}},
-        "style": schema_style
-    },
-    "required": ["plots"]
-}
-
 schema_colorplot = {
     "type": "object",
     "properties": {
@@ -145,6 +126,25 @@ schema_colorplot = {
         "style": schema_style,
     },
     "required": ["z"]
+}
+
+schema_multiplot = {
+    "type": "object",
+    "properties": {
+        "type": {"Description": "Reserved keyword. Must be \"multiplot\"", "type": "string"},
+        "version": {"Description": "vfd file format version. Reserved for future use", "type": "string"},
+        "plots": {
+            "Description": "Bidimensional matrix of plots. Each item of this array is an array with a row of plots",
+            "type": "array",
+            "items": {"type": "array", "items": {"anyof": [schema_plot, schema_colorplot]}}},
+        "title": {"Description": "Title for the plots", "type": "string"},
+        "xshared": {"Description:": "If x-axis should be shared", "type": "string", "pattern": "^(all|none|row|col)$"},
+        "yshared": {"Description:": "If y-axis should be shared", "type": "string", "pattern": "^(all|none|row|col)$"},
+        "joined": {"Description:": "If the subplots should be adjacent in horizontal and vertical respectively",
+                   "type": "array", "minitems": 2, "maxitems": 2, "items": {"type": "boolean"}},
+        "style": schema_style
+    },
+    "required": ["plots"]
 }
 
 
@@ -519,6 +519,8 @@ def create_matplotlib_script(description, export_name="untitled", context=None, 
             code += ", figsize=(%d * size_x, %d * size_y)" % (plots_hor, plots_ver)
         code += ")\n"
 
+        # TODO: Add colorplot support
+
         if plots_hor == 1 and plots_ver == 1:
             code += _create_matplotlib_plot(description["plots"][0][0], container="axarr", current_axes=False,
                                             indentation_level=indentation_level, marker_list=marker_list,
@@ -614,7 +616,13 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
                 validate_schema(description, schema_colorplot)
             else:
                 raise ValueError("Unknown type: %s" % description["type"])
-            output.write(create_matplotlib_script(description, export_name=basename, **kwargs))
+
+            # If it's a single item multiplot, skip the multiplot container
+            if description["type"] == "multiplot" and len(description["plots"]) == 1 and len(
+                description["plots"][0]) == 1:
+                output.write(create_matplotlib_script(description["plots"][0][0], export_name=basename, **kwargs))
+            else:
+                output.write(create_matplotlib_script(description, export_name=basename, **kwargs))
         if run:
             proc = subprocess.Popen(["python", os.path.abspath(pyfile_path)],
                                     cwd=os.path.abspath(os.path.dirname(pyfile_path)))
