@@ -100,6 +100,7 @@ class Builder:
 
         """
         self.data = {}
+        self._fig = None
         self._subplots = None
         if plt is None and to_matplotlib:
             logger.warning("Matplotlib not available")
@@ -298,9 +299,10 @@ class Builder:
             # To ease treatment
             kwargs["squeeze"] = False
             fig, mpl_axes = plt.subplots(*args, **kwargs)
+            self._fig = FigureBuilder(self, fig=fig)
             self._subplots = [[AxesBuilder(axis) for axis in row] for row in mpl_axes]
         else:
-            fig = None
+            fig = FigureBuilder(self, fig=None)
             self._subplots = [[AxesBuilder(None) for _ in range(num_cols)] for _ in range(num_rows)]
         self.data["type"] = "multiplot"
         try:
@@ -314,9 +316,9 @@ class Builder:
         except KeyError:
             pass
         if squeeze:
-            return fig, _squeeze_matrix(self._subplots)
+            return self._fig, _squeeze_matrix(self._subplots)
         else:
-            return fig, self._subplots
+            return self._fig, self._subplots
 
     def text(self, x, y, s, **kwargs):
         if "epilog" not in self.data:
@@ -402,6 +404,30 @@ class Builder:
 
         else:
             raise AttributeError("Builder has no attribute '%s'" % name)
+
+
+class FigureBuilder:
+    """
+    Class that mimics the behaviour of matplotlib.pyplot.figure to produce vfd files.
+    """
+
+    def __init__(self, builder, fig=None):
+        self.builder = builder
+        self.fig = fig
+
+    def savefig(self, fname, **kwargs):
+        self.builder.savevfd(fname)
+
+        if self.fig is not None:
+            return self.fig.savefig(fname, **kwargs)
+
+    def __getattr__(self, name):
+        if self.fig is not None:
+            logger.warning("Attribute '%s' is not parsed by FigureBuilder" % name)
+            return getattr(self.fig, name)
+
+        else:
+            raise AttributeError("FigureBuilder has no attribute '%s'" % name)
 
 
 class AxesBuilder:
