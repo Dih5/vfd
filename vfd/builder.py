@@ -35,6 +35,8 @@ try:
         for items in zip(*lists):
             if np.isfinite(items).all():
                 for pos, i in enumerate(items):
+                    if isinstance(i, np.ndarray):
+                        i = i.tolist()
                     if isinstance(i, np.generic):
                         ret[pos].append(np.asscalar(i))
                     else:
@@ -251,7 +253,7 @@ class Builder:
     def _colorplot(self, *args):
         if len(args) in [1, 2]:  # 2nd argument might be in the signature of contour/contourf
             self.data["type"] = "colorplot"
-            self.data["z"] = _ensure_normal_type(args[0])[0]
+            self.data["z"] = list(_ensure_normal_type(*args[0]))
         elif len(args) in [3, 4]:  # 4th argument might be in the signature of contour/contourf
             x, y, z = args[0:3]
             # Dimensions of X,Y in pcolor/pcolormesh might be those of Z + 1 (in fact, they should)
@@ -266,7 +268,7 @@ class Builder:
             # TODO: Nan and Inf should be improved
             self.data["x"] = _ensure_normal_type(x)[0]
             self.data["y"] = _ensure_normal_type(y)[0]
-            self.data["z"] = _ensure_normal_type(z)[0]
+            self.data["z"] = list(_ensure_normal_type(*z))
         else:
             raise ValueError("Bad argument number")
 
