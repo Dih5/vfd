@@ -1,0 +1,89 @@
+{
+    "plots": [
+        [
+            {
+                "series": [
+                    {
+                        "x": [
+                            0,
+                            1,
+                            2,
+                            3
+                        ],
+                        "y": [
+                            0,
+                            1,
+                            2,
+                            3
+                        ]
+                    }
+                ],
+                "type": "plot",
+                "xlabel": "Matrix element 1,1"
+            },
+            {
+                "series": [
+                    {
+                        "x": [
+                            0,
+                            1,
+                            4,
+                            9
+                        ],
+                        "y": [
+                            0,
+                            1,
+                            2,
+                            3
+                        ]
+                    }
+                ],
+                "type": "plot",
+                "xlabel": "Matrix element 1,2"
+            }
+        ],
+        [
+            {
+                "series": [
+                    {
+                        "x": [
+                            0,
+                            1,
+                            2,
+                            3
+                        ],
+                        "y": [
+                            0,
+                            1,
+                            4,
+                            9
+                        ]
+                    }
+                ],
+                "type": "plot",
+                "xlabel": "Matrix element 2,1"
+            },
+            {
+                "series": [
+                    {
+                        "x": [
+                            0,
+                            1,
+                            4,
+                            9
+                        ],
+                        "y": [
+                            0,
+                            1,
+                            4,
+                            9
+                        ]
+                    }
+                ],
+                "type": "plot",
+                "xlabel": "Matrix element 2,2"
+            }
+        ]
+    ],
+    "type": "multiplot"
+}

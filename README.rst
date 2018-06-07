@@ -29,7 +29,11 @@ Also check http://github.com/dih5/vfd/tree/master/external for tools to use it f
 
 Features
 --------
-* While version<1.0.0, minor releases will mean API compatibility is broken.
+* Describe and plot:
+    * Scatter plots
+    * Error bars
+    * Color maps (from arrays of 2D data)
+    * Multiple plots in one file
 * CLI and python package to plot the files with matplotlib.
-
-
+* API mimicking matplotlib's to generate files without changing your code.
+* While version<1.0.0, minor releases will mean API compatibility is broken.
