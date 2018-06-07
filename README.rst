@@ -20,6 +20,8 @@ VFD (Vernacular Figure Description) is a JSON-based description system for plots
 plotted, while *how* it is done is decided when the files are opened. This allows to generate a set of files describing
 the plots, which can latter be batch-processed to produce a consistent set of figures.
 
+.. image:: https://github.com/Dih5/vfd/raw/master/demo.png
+
 Also check http://github.com/dih5/vfd/tree/master/external for tools to use it from other applications.
 
 
