@@ -14,6 +14,7 @@ import re
 
 try:
     import matplotlib.pyplot as plt
+    from matplotlib.colors import LogNorm
 except ModuleNotFoundError:
     plt = None
 
@@ -232,26 +233,26 @@ class Builder:
         pass
 
     def contour(self, *args, **kwargs):
-        self._colorplot(*args)
+        self._colorplot(*args, **kwargs)
         if self.to_matplotlib:
             return plt.contour(*args, **kwargs)
 
     def contourf(self, *args, **kwargs):
-        self._colorplot(*args)
+        self._colorplot(*args, **kwargs)
         if self.to_matplotlib:
             return plt.contourf(*args, **kwargs)
 
     def pcolor(self, *args, **kwargs):
-        self._colorplot(*args)
+        self._colorplot(*args, **kwargs)
         if self.to_matplotlib:
             return plt.pcolor(*args, **kwargs)
 
     def pcolormesh(self, *args, **kwargs):
-        self._colorplot(*args)
+        self._colorplot(*args, **kwargs)
         if self.to_matplotlib:
             return plt.pcolormesh(*args, **kwargs)
 
-    def _colorplot(self, *args):
+    def _colorplot(self, *args, **kwargs):
         if len(args) in [1, 2]:  # 2nd argument might be in the signature of contour/contourf
             self.data["type"] = "colorplot"
             self.data["z"] = list(_ensure_normal_type(*args[0]))
@@ -272,6 +273,10 @@ class Builder:
             self.data["z"] = list(_ensure_normal_type(*z))
         else:
             raise ValueError("Bad argument number")
+        if "norm" in kwargs and plt is not None:
+            # Check if logarithmic
+            if isinstance(kwargs["norm"], LogNorm):
+                self.data["zlog"] = True
 
     def subplots(self, *args, **kwargs):
         # Default values
@@ -550,26 +555,26 @@ class AxesBuilder:
         pass
 
     def contour(self, *args, **kwargs):
-        self._colorplot(*args)
+        self._colorplot(*args, **kwargs)
         if self.axes is not None:
             return self.axes.contour(*args, **kwargs)
 
     def contourf(self, *args, **kwargs):
-        self._colorplot(*args)
+        self._colorplot(*args, **kwargs)
         if self.axes is not None:
             return self.axes.contourf(*args, **kwargs)
 
     def pcolor(self, *args, **kwargs):
-        self._colorplot(*args)
+        self._colorplot(*args, **kwargs)
         if self.axes is not None:
             return self.axes.pcolor(*args, **kwargs)
 
     def pcolormesh(self, *args, **kwargs):
-        self._colorplot(*args)
+        self._colorplot(*args, **kwargs)
         if self.axes is not None:
             return self.axes.pcolormesh(*args, **kwargs)
 
-    def _colorplot(self, *args):
+    def _colorplot(self, *args, **kwargs):
         if len(args) in [1, 2]:  # 2nd argument might be in the signature of contour/contourf
             self.data["type"] = "colorplot"
             self.data["z"] = _ensure_normal_type(args[0])[0]
@@ -589,6 +594,10 @@ class AxesBuilder:
             self.data["z"] = _ensure_normal_type(z)[0]
         else:
             raise ValueError("Bad argument number")
+        if "norm" in kwargs and plt is not None:
+            # Check if logarithmic
+            if isinstance(kwargs["norm"], LogNorm):
+                self.data["zlog"] = True
 
     def text(self, x, y, s, **kwargs):
         if "epilog" not in self.data:
