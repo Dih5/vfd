@@ -71,13 +71,22 @@ def _squeeze_matrix(matrix):
 _float_pattern = '[-+]?(?:(?:\d*\.\d+)|(?:\d+\.?))(?:[Ee][+-]?\d+)?'
 
 
+def supplant_pyplot():
+    """Replace the pyplot module by a Builder instance"""
+    import sys
+    module = sys.modules['matplotlib']
+    module.pyplot = Builder()
+    sys.modules['matplotlib'] = module
+
+
 # TODO: A lot of repeated code to move to a default Axes object
 
 class Builder:
     """
     Class that mimics the behaviour of matplotlib.pyplot to produce vfd files.
 
-    Consider adding "plt=Builder()" in your plotting script to add vfd file generation.
+    Consider calling the supplant_pyplot method or adding "plt=Builder()" to your plotting script to add vfd file
+    generation.
 
     """
 
