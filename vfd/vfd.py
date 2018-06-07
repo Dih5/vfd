@@ -374,7 +374,7 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
     return code
 
 
-def _create_matplotlib_colorplot(description, container="plt", current_axes=True, indentation_level=0):
+def _create_matplotlib_colorplot(description, container="plt", current_axes=True, indentation_level=0, rasterized=True):
     """
     Create code describing a simple plot.
 
@@ -383,6 +383,7 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
         container (str): The object whose methods are called. E.g., 'plt' for pyplot or an axes.
         current_axes (bool): Whether to call the set_* methods of the container or the current axes methods (for 'plt').
         indentation_level: Indentation level for the code.
+        rasterized (bool): Whether the plot should be rasterized
 
     Returns:
         str: Python code which will create the plot.
@@ -406,12 +407,12 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
     except KeyError:
         pass
 
-    # Store the ContourSet to label it later
+    # Store the ContourSet to label or rasterize it later
     code += indentation
-    if plot_f == "contour":
+    if plot_f in ["contour", "contourf"]:
         code += "cs = "
 
-    # Leave call open for log scale
+    # Leave call open for other args
     if "x" and "y" in description:
         code += container + '.%s(%s,%s,%s' % (plot_f, description["x"], description["y"], description["z"])
     else:
@@ -423,7 +424,14 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
     except KeyError:
         pass
 
+    if rasterized and plot_f == "pcolormesh":
+        code += ", rasterized=True"
+
     code += ')\n'
+
+    if rasterized and plot_f in ["contour", "contourf"]:
+        code += indentation + "for c in cs.collections:\n" + indentation + " " * _indentation_size + \
+                "c.set_rasterized(True)\n"
 
     try:
         if description["xlog"]:
