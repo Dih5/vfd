@@ -134,3 +134,49 @@ def test_multiplot():
     assert data["plots"][0][1]["series"][0]["y"] == [3, 4, 5]
     assert data["plots"][1][1]["series"][0]["y"] == [4, 5, 6]
     assert data["xshared"] == "all"
+
+
+def test_twinx():
+    """Test twinx functionality"""
+    # Just check subplot properties are retrieved by the main instance
+    p = builder.Builder()
+    fig, ax = p.subplots()
+    twinx = ax.twinx()
+    ax.plot([1.0, 2.0, 3.0], [1.0, 2.0, 9.0])
+    twinx.semilogy([1.0, 2.0, 3.0], [1.0, 1.5, 1.0])
+    ax.set_ylabel("Romulus")
+    twinx.set_ylabel("Remus")
+    twinx.set_ylim(0.1, 2.1)
+
+    data = p.get_data()["plots"][0][0]
+
+    assert "xadded" not in data["series"][0]
+    assert "yadded" not in data["series"][0]
+    assert "xadded" not in data["series"][1]
+    assert "yadded" in data["series"][1]
+    assert data["ylabel"] == "Romulus"
+    assert data["yadded"][0]["label"] == "Remus"
+    assert data["yadded"][0]["range"] == (0.1, 2.1)
+
+
+def test_twiny():
+    """Test twiny functionality"""
+    # Just check subplot properties are retrieved by the main instance
+    p = builder.Builder()
+    fig, ax = p.subplots()
+    twiny = ax.twiny()
+    ax.plot([1.0, 2.0, 3.0], [1.0, 2.0, 9.0])
+    twiny.semilogx([1.0, 2.0, 3.0], [1.0, 1.5, 1.0])
+    ax.set_xlabel("Romulus")
+    twiny.set_xlabel("Remus")
+    twiny.set_xlim(0.1, 2.1)
+
+    data = p.get_data()["plots"][0][0]
+
+    assert "xadded" not in data["series"][0]
+    assert "yadded" not in data["series"][0]
+    assert "xadded" in data["series"][1]
+    assert "yadded" not in data["series"][1]
+    assert data["xlabel"] == "Romulus"
+    assert data["xadded"][0]["label"] == "Remus"
+    assert data["xadded"][0]["range"] == (0.1, 2.1)

@@ -11,6 +11,7 @@ import subprocess
 from numbers import Number
 import logging
 import re
+from copy import deepcopy
 
 try:
     import matplotlib.pyplot as plt
@@ -334,7 +335,7 @@ class Builder:
 
     def get_data(self):
         if self._subplots is not None:
-            self.data["plots"] = [[x.data for x in row] for row in self._subplots]
+            self.data["plots"] = [[x.get_data() for x in row] for row in self._subplots]
 
         return self.data
 
@@ -443,11 +444,19 @@ class AxesBuilder:
     def __init__(self, axes=None):
         self.axes = axes
         self.data = {"type": "plot"}
+        self.twins_x = []
+        self.twins_y = []
 
     def plot(self, *args, **kwargs):
         self._plot(*args, **kwargs)
         if self.axes is not None:
             return self.axes.plot(*args, **kwargs)
+
+    def semilogx(self, *args, **kwargs):
+        self.data["xlog"] = True
+        self._plot(*args, **kwargs)
+        if self.axes is not None:
+            return self.axes.semilogx(*args, **kwargs)
 
     def semilogy(self, *args, **kwargs):
         self.data["ylog"] = True
@@ -605,6 +614,58 @@ class AxesBuilder:
         self.data["epilog"].append({"type": "text", "x": x, "y": y, "text": s})
         if self.axes is not None:
             return self.axes.text(x, y, s, **kwargs)
+
+    def twinx(self):
+        if self.axes is not None:
+            new_axis = AxesBuilder(self.axes.twinx())
+        else:
+            new_axis = AxesBuilder
+
+        self.twins_x.append(new_axis)
+        return new_axis
+
+    def twiny(self):
+        if self.axes is not None:
+            new_axis = AxesBuilder(self.axes.twiny())
+        else:
+            new_axis = AxesBuilder
+
+        self.twins_y.append(new_axis)
+        return new_axis
+
+    def get_data(self):
+        data2 = deepcopy(self.data)
+        for a in self.twins_x:
+            data_twin = a.get_data()
+            for s in data_twin["series"]:
+                data2["series"].append(deepcopy(s))
+                data2["series"][-1]["yadded"] = 1
+            # The following code does not account for multiple axes addition
+            if "yadded" not in data2:
+                data2["yadded"] = [{}]
+            if "ylabel" in data_twin:
+                data2["yadded"][-1]["label"] = data_twin["ylabel"]
+            if "ylog" in data_twin:
+                data2["yadded"][-1]["log"] = data_twin["ylog"]
+            if "yrange" in data_twin:
+                data2["yadded"][-1]["range"] = data_twin["yrange"]
+
+        for a in self.twins_y:
+            data_twin = a.get_data()
+            for s in data_twin["series"]:
+                data2["series"].append(deepcopy(s))
+                data2["series"][-1]["xadded"] = 1
+            # The following code does not account for multiple axes addition
+            if "xadded" not in data2:
+                data2["xadded"] = [{}]
+            if "xlabel" in data_twin:
+                data2["xadded"][-1]["label"] = data_twin["xlabel"]
+            if "ylog" in data_twin:
+                data2["xadded"][-1]["log"] = data_twin["xlog"]
+            if "xrange" in data_twin:
+                data2["xadded"][-1]["range"] = data_twin["xrange"]
+
+        return data2
 
     def __getattr__(self, name):
         if self.axes is not None:
