@@ -27,12 +27,26 @@ def main(file, format, style, tight, scalemulti, version):
     # If we wanted to support this, a escape procedure should be defined.
     if style is not None and "," in style:
         style = style.split(",")
+    xlsx = False
     if format is not None and "," in format:
         format = format.split(",")
+        if "xlsx" in format:
+            xlsx = True
+            format.remove("xlsx")
+    if format == "xlsx":
+        xlsx = True
+        format = None
+
     if file:
         for f in file:
-            vfd.create_scripts(path=f, export_format=format, context=style, run=True, tight_layout=tight,
-                               scale_multiplot=scalemulti)
+            if xlsx:
+                vfd.create_xlsx(path=f)
+                if format:
+                    vfd.create_scripts(path=f, export_format=format, context=style, run=True, tight_layout=tight,
+                                       scale_multiplot=scalemulti)
+            else:
+                vfd.create_scripts(path=f, export_format=format, context=style, run=True, tight_layout=tight,
+                                   scale_multiplot=scalemulti)
     else:
         _print_help_msg(main)
     return 0

@@ -7,6 +7,7 @@ import os
 import subprocess
 
 from jsonschema import validate as validate_schema
+import xlsxwriter
 
 default_colors = ['#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD', '#8C564B', '#E377C2', '#7F7F7F']
 
@@ -506,8 +507,8 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
     code += ')\n'
 
     if rasterized and plot_f in ["contour", "contourf"]:
-        code += indentation + "for c in cs.collections:\n" + indentation + " " * _indentation_size +\
-                "c.set_rasterized(True)\n"
+        code += indentation + "for c in cs.collections:\n"
+        code += indentation + " " * _indentation_size + "c.set_rasterized(True)\n"
 
     try:
         if description["xlog"]:
@@ -662,6 +663,82 @@ def create_matplotlib_script(description, export_name="untitled", context=None, 
     return code
 
 
+def export_xlsx(description, file_path):
+    """
+    Create a matplotlib script to plot the VFD with the given description.
+
+    Args:
+        description (dict): Description of the VFD, obtained parsing the JSON.
+        file_path (str): Path to the created file.
+
+
+    """
+    row_start = '3'  # Row where the series start in the spreadsheet
+    if description["type"] == "plot":
+        workbook = xlsxwriter.Workbook(file_path)
+        worksheet = workbook.add_worksheet()
+        bold = workbook.add_format({'bold': 1})
+        if "title" in description:
+            worksheet.write(0, 0, description["title"], bold)
+        if "xlabel" in description:
+            worksheet.write(0, 1, description["xlabel"], bold)
+        if "ylabel" in description:
+            worksheet.write(0, 2, description["ylabel"], bold)
+        # Prepare a chart with both markers and lines by default
+        chart = workbook.add_chart({'type': 'scatter', 'subtype': 'straight_with_markers'})
+        for i, s in enumerate(description["series"]):
+            col = chr(ord('A') + 2 * i)
+            col2 = chr(ord('B') + 2 * i)
+            worksheet.write_column(col + row_start, s["x"])
+            worksheet.write_column(col2 + row_start, s["y"])
+            if "label" in s:
+                worksheet.write(1, 2 * i, s["label"], bold)
+
+            # TODO: add error bar support
+            opts = {
+                'name': '=Sheet1!$%s$2' % col,
+                'categories': '=Sheet1!$%s$%s:$%s$%s' % (col, int(row_start), col, str(len(s["x"]) + int(row_start))),
+                'values': '=Sheet1!$%s$%s:$%s$%s' % (col2, int(row_start), col2, str(len(s["y"]) + int(row_start))),
+            }
+            if "joined" in s:
+                # If joined was explicitly set, remove the unwanted lines or markers
+                if s["joined"]:
+                    opts['marker'] = {'type': 'none'}
+                else:
+                    opts['line'] = {'none': True}
+            chart.add_series(opts)
+        chart.set_title({'name': '=Sheet1!A1'})
+        # Attribute "legendtitle" can not be used in xlsx
+        # A possible workarounds could be adding a dummy series as follows
+        # if "legendtitle" in description:
+        #     chart.add_series(
+        #         {'name': description["legendtitle"], 'categories': '1', 'values': '1', 'marker': {'type': 'none'},
+        #          'line': {'none': True}})
+        # However, I still don't like the result. Better do nothing.
+        opts = {'name': '=Sheet1!B1'}
+        if "xlog" in description and description["xlog"]:
+            opts["log_base"] = 10
+        if "xrange" in description:
+            opts["min"], opts["max"] = description["xrange"]
+        chart.set_x_axis(opts)
+
+        opts = {'name': '=Sheet1!C1'}
+        if "ylog" in description and description["ylog"]:
+            opts["log_base"] = 10
+        if "yrange" in description:
+            opts["min"], opts["max"] = description["yrange"]
+        chart.set_y_axis(opts)
+
+        worksheet.insert_chart('D3', chart, {'x_offset': 25, 'y_offset': 10})
+        workbook.close()
+    elif description["type"] == "multiplot":
+        raise NotImplemented
+    elif description["type"] == "colorplot":
+        raise NotImplemented
+    else:
+        raise ValueError("Unknown type: %s" % description["type"])
+
+
 def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwargs):
     """
     Create a script to generate a plot for the VFD file in the given path.
@@ -703,7 +780,7 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
 
             # If it's a single item multiplot, skip the multiplot container
             if description["type"] == "multiplot" and len(description["plots"]) == 1 and \
-                    len(description["plots"][0]) == 1:
+                len(description["plots"][0]) == 1:
                 output.write(create_matplotlib_script(description["plots"][0][0], export_name=basename, **kwargs))
             else:
                 output.write(create_matplotlib_script(description, export_name=basename, **kwargs))
@@ -712,3 +789,46 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
                                     cwd=os.path.abspath(os.path.dirname(pyfile_path)))
             if blocking:
                 proc.wait()
+
+
+def create_xlsx(path=".", expand_glob=True):
+    """
+    Create a xlsx file for the VFD file in the given path.
+
+    Args:
+        path (str): Path to the VFD file.
+        expand_glob (bool): Whether regular expressions are expanded (e.g., *.vfd or  **.vfd)
+
+    Raises:
+        FileNotFoundError: If the file was not found.
+        json.JSONDecodeError: If the file was opened, but it is not a well-built JSON.
+        jsonschema.ValidationError: If the opened file was a well-built JSON but not a well-built VFD.
+
+    """
+    # TODO: Refactor to unify with create_scripts
+    if expand_glob:
+        file_list = glob(path)
+    else:
+        file_list = [path]
+    if not file_list:
+        raise ValueError("No file matching " + path)
+    for file in file_list:
+        pyfile_path = file[:-3] + "xlsx"
+        description = json.load(open(file))
+        if "type" not in description:
+            raise ValueError("No type in provided file")
+        if description["type"] == "plot":
+            validate_schema(description, schema_plot)
+        elif description["type"] == "multiplot":
+            validate_schema(description, schema_multiplot)
+        elif description["type"] == "colorplot":
+            validate_schema(description, schema_colorplot)
+        else:
+            raise ValueError("Unknown type: %s" % description["type"])
+
+        # If it's a single item multiplot, skip the multiplot container
+        if description["type"] == "multiplot" and len(description["plots"]) == 1 and \
+            len(description["plots"][0]) == 1:
+            export_xlsx(description["plots"][0][0], pyfile_path)
+        else:
+            export_xlsx(description, pyfile_path)
