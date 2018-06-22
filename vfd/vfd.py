@@ -372,7 +372,7 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
 
             # Add indentation to aid edition
             code += indentation + series_container + '.errorbar(*%s,%s**%s)\n' % (
-            args, "\n" + indentation + " " * 12, kwargs)
+                args, "\n" + indentation + " " * 12, kwargs)
         else:
             # Regular plot
             if "joined" in s:
@@ -382,7 +382,7 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
             if kwargs:
                 # Add indentation to aid edition
                 code += indentation + series_container + '.plot(*%s,%s**%s)\n' % (
-                args, "\n" + indentation + " " * 8, kwargs)
+                    args, "\n" + indentation + " " * 8, kwargs)
             else:
                 code += indentation + series_container + '.plot(*%s)\n' % (args)
 
@@ -422,7 +422,6 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
             code += indentation + 'twinx.set_ylim(%f,%f)\n' % tuple(description["yadded"][0]["range"])
         if "log" in description["yadded"][0] and description["yadded"][0]["log"]:
             code += indentation + 'twinx.set_yscale("log")\n'
-
 
     if "title" in description and description["title"]:
         # Title can be requested to go inside the figure as a text.
@@ -507,7 +506,7 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
     code += ')\n'
 
     if rasterized and plot_f in ["contour", "contourf"]:
-        code += indentation + "for c in cs.collections:\n" + indentation + " " * _indentation_size + \
+        code += indentation + "for c in cs.collections:\n" + indentation + " " * _indentation_size +\
                 "c.set_rasterized(True)\n"
 
     try:
@@ -703,8 +702,8 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
                 raise ValueError("Unknown type: %s" % description["type"])
 
             # If it's a single item multiplot, skip the multiplot container
-            if description["type"] == "multiplot" and len(description["plots"]) == 1 and len(
-                description["plots"][0]) == 1:
+            if description["type"] == "multiplot" and len(description["plots"]) == 1 and \
+                    len(description["plots"][0]) == 1:
                 output.write(create_matplotlib_script(description["plots"][0][0], export_name=basename, **kwargs))
             else:
                 output.write(create_matplotlib_script(description, export_name=basename, **kwargs))
