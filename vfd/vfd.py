@@ -116,6 +116,9 @@ schema_colorplot = {
                    "maxItems": 2, "items": {"type": "number"}},
         "yrange": {"Description": "Range of representation in the y-axis", "type": "array", "minItems": 2,
                    "maxItems": 2, "items": {"type": "number"}},
+        "zrange": {"Description": "Range of representation in the color map", "type": "array", "minItems": 2,
+                   "maxItems": 2, "items": {"type": "number"}},
+        "levels": {"Description": "Levels to plot in a contour plot", "type": "array", "items": {"type": "number"}},
         "xlog": {"Description": "Whether the scale should be logarithmic in the x-axis", "type": "boolean"},
         "ylog": {"Description": "Whether the scale should be logarithmic in the y-axis", "type": "boolean"},
         "zlog": {"Description": "Whether the color scale should be logarithmic", "type": "boolean"},
@@ -486,11 +489,17 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
     else:
         code += container + '.%s(%s' % (plot_f, description["z"])
 
-    try:
-        if description["zlog"]:
+    # Set the scale and range
+    if "zlog" in description and description["zlog"]:
+        if "zrange" in description:
+            code += ", norm=LogNorm(vmin=%f, vmax=%f)" % tuple(description["zrange"])
+        else:
             code += ", norm=LogNorm()"
-    except KeyError:
-        pass
+    elif "zrange" in description and plot_f in ["contour", "contourf"]:
+        code += ",vmin=%f, vmax=%f" % tuple(description["zrange"])
+
+    if "levels" in description and plot_f in ["contour", "contourf"]:
+        code += ", levels=[" + ", ".join(list(map(str, description["levels"]))) + "]"
 
     if rasterized and plot_f == "pcolormesh":
         code += ", rasterized=True"
