@@ -28,6 +28,14 @@ schema_style = {
     }
 }
 
+schema_added_axis = {
+    "type": "object",
+    "range": {"Description": "Range of representation in this axis", "type": "array", "minItems": 2,
+              "maxItems": 2, "items": {"type": "number"}},
+    "log": {"Description": "Whether the scale should be logarithmic in this axis", "type": "boolean"},
+    "label": {"Description": "Label for this added axis", "type": "string"},
+}
+
 schema_plot = {
     "type": "object",
     "properties": {
@@ -41,6 +49,8 @@ schema_plot = {
         "ylog": {"Description": "Whether the scale should be logarithmic in the y-axis", "type": "boolean"},
         "xlabel": {"Description": "Label for the x-axis", "type": "string"},
         "ylabel": {"Description": "Label for the y-axis", "type": "string"},
+        "xadded": {"Description": "List of added x axes", "type": "array", "items": schema_added_axis},
+        "yadded": {"Description": "List of added y axes", "type": "array", "items": schema_added_axis},
         "title": {"Description": "Title for the plot", "type": "string"},
         "legendtitle": {"Description": "A title to be placed in the legend", "type": "string"},
         "series": {"description": "Series of data in the plot", "type": "array", "minItems": 1, "items": {
@@ -77,6 +87,10 @@ schema_plot = {
                          "type": "array",
                          "items": {"type": "number"},
                          },
+                "xadded": {"description": "Index of the added x axis to use for this series",
+                           "type": "integer"},
+                "yadded": {"description": "Index of the added y axis to use for this series",
+                           "type": "integer"},
                 "label": {"description": "Description of the series to be added to the legend if used",
                           "type": ["string", "number"]},
                 "color": {"description": "An index representing the color used.",
@@ -266,6 +280,30 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
     line_count = 0
     code = ""
     indentation = " " * (indentation_level * _indentation_size)
+    # find out twin axes to set
+    xadded_max = 0
+    yadded_max = 0
+    for s in description["series"]:
+        if "xadded" in s:
+            xadded_max = max(xadded_max, s["xadded"])
+        if "yadded" in s:
+            yadded_max = max(yadded_max, s["yadded"])
+    if xadded_max == 0 and yadded_max == 0:
+        # Regular plot
+        pass
+    elif xadded_max > 1 or yadded_max > 1:
+        raise NotImplemented("Two or more added axes are not supported")
+    else:
+        if current_axes:
+            code += indentation + "fig, ax = plt.subplots()\n"
+            current_axes = False
+            container = "ax"
+    if xadded_max == 1:
+        code += indentation + "twiny = %s.twiny()\n" % container
+    if yadded_max == 1:
+        code += indentation + "twinx = %s.twinx()\n" % container
+    # TODO: Consider the possibility of both axes different
+
     for s in description["series"]:
         y = s["y"]
         if "x" in s:
@@ -286,6 +324,19 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
         elif explicit_lines:
             kwargs["linestyle"] = _cycle_property(line_count, line_list)
             line_count += 1
+
+        series_container = container
+        series_xaxis, series_yaxis = 0, 0
+        if "xadded" in s and s["xadded"] == 1:
+            series_xaxis = 1
+        if "yadded" in s and s["yadded"] == 1:
+            series_yaxis = 1
+        if series_xaxis and series_yaxis:
+            raise NotImplemented("Both added axes not yet supported")
+        elif series_xaxis:
+            series_container = "twiny"
+        elif series_yaxis:
+            series_container = "twinx"
 
         if any([i in s for i in {"xerr", "xmax", "xmin", "yerr", "ymin", "ymax"}]):
             # Error bar plot
@@ -317,7 +368,8 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
                     marker_count += 1
 
             # Add indentation to aid edition
-            code += indentation + container + '.errorbar(*%s,%s**%s)\n' % (args, "\n" + indentation + " " * 12, kwargs)
+            code += indentation + series_container + '.errorbar(*%s,%s**%s)\n' % (
+            args, "\n" + indentation + " " * 12, kwargs)
         else:
             # Regular plot
             if "joined" in s:
@@ -326,9 +378,10 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
                     marker_count += 1
             if kwargs:
                 # Add indentation to aid edition
-                code += indentation + container + '.plot(*%s,%s**%s)\n' % (args, "\n" + indentation + " " * 8, kwargs)
+                code += indentation + series_container + '.plot(*%s,%s**%s)\n' % (
+                args, "\n" + indentation + " " * 8, kwargs)
             else:
-                code += indentation + container + '.plot(*%s)\n' % (args)
+                code += indentation + series_container + '.plot(*%s)\n' % (args)
 
     if "xrange" in description:
         code += indentation + container + ('.' if current_axes else '.set_') + 'xlim(%f,%f)\n' % (
@@ -353,6 +406,21 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
     if "ylabel" in description:
         code += indentation + container + ('.' if current_axes else '.set_') + 'ylabel(%s)\n' % _to_code_string(
             description["ylabel"])
+
+    # Added axes
+    if xadded_max == 1:
+        if "label" in description["xadded"][0]:
+            code += indentation + "twiny.set_xlabel(%s)\n" % _to_code_string(description["xadded"][0]["label"])
+
+    if yadded_max == 1:
+        if "label" in description["yadded"][0]:
+            code += indentation + "twinx.set_ylabel(%s)\n" % _to_code_string(description["yadded"][0]["label"])
+        if "range" in description["yadded"][0]:
+            code += indentation + 'twinx.set_ylim(%f,%f)\n' % tuple(description["yadded"][0]["range"])
+        if "log" in description["yadded"][0] and description["yadded"][0]["log"]:
+            code += indentation + 'twinx.set_yscale("log")\n'
+
+
     if "title" in description and description["title"]:
         # Title can be requested to go inside the figure as a text.
         # This is useful for multiplots, where an upper title can be confusing.
