@@ -444,6 +444,10 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
     if xadded_max == 1:
         if "label" in description["xadded"][0]:
             code += indentation + "twiny.set_xlabel(%s)\n" % _to_code_string(description["xadded"][0]["label"])
+        if "range" in description["xadded"][0]:
+            code += indentation + 'twiny.set_xlim(%f,%f)\n' % tuple(description["xadded"][0]["range"])
+        if "log" in description["xadded"][0] and description["xadded"][0]["log"]:
+            code += indentation + 'twiny.set_xscale("log")\n'
 
     if yadded_max == 1:
         if "label" in description["yadded"][0]:

@@ -1,0 +1,37 @@
+{
+    "type": "plot",
+    "xlabel": "Tweedledum",
+    "xadded":[{"label": "Tweedledee",
+               "range": [0.1, 2.1],
+               "log": true
+    }],
+    "series": [
+        {
+            "x": [
+                1.0,
+                2.0,
+                3.0
+            ],
+            "y": [
+                1.0,
+                2.0,
+                9.0
+            ],
+            "label": "Dum"
+        },
+        {
+            "x": [
+                1.0,
+                2.0,
+                3.0
+            ],
+            "y": [
+                1.0,
+                1.5,
+                1.0
+            ],
+            "xadded": 1,
+            "label": "Dee"
+        }
+    ]
+}
