@@ -635,6 +635,8 @@ class AxesBuilder:
 
     def get_data(self):
         data2 = deepcopy(self.data)
+        if "series" not in data2:
+            data2["series"] = []
         for a in self.twins_x:
             data_twin = a.get_data()
             for s in data_twin["series"]:
