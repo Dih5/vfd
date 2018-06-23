@@ -5,9 +5,13 @@ import json
 from glob import glob
 import os
 import subprocess
+import logging
 
 from jsonschema import validate as validate_schema
 import xlsxwriter
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.Logger("vfd")
 
 default_colors = ['#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD', '#8C564B', '#E377C2', '#7F7F7F']
 
@@ -35,6 +39,10 @@ schema_added_axis = {
               "maxItems": 2, "items": {"type": "number"}},
     "log": {"Description": "Whether the scale should be logarithmic in this axis", "type": "boolean"},
     "label": {"Description": "Label for this added axis", "type": "string"},
+    "legendlabel": {
+        "Description": "A title to be placed in the legend of the series related to the axis, when such an attribution "
+                       "makes sense (e.g., when one axis is shared)",
+        "type": "string"}
 }
 
 schema_plot = {
@@ -400,10 +408,31 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
         code += indentation + container + ('.' if current_axes else '.set_') + 'yscale("log")\n'
 
     if add_legend:
+        # Find out options needed for the main legend, checking added axis and adding their legends before
+        legend_options = []
         if "legendtitle" in description:
-            code += indentation + container + '.legend(title=%s)\n' % _to_code_string(description["legendtitle"])
+            legend_options.append("title=" + _to_code_string(description["legendtitle"]))
+        if xadded_max == yadded_max == 0:
+            pass
+        elif xadded_max == 1 and yadded_max == 0:
+            legend_options.append("loc='lower right'")
+            if "legendtitle" in description["xadded"][0]:
+                code += indentation + 'twiny.legend(title=%s, loc="upper right")\n' % _to_code_string(
+                    description["xadded"][0]["legendtitle"])
+            else:
+                code += indentation + 'twiny.legend(loc="upper right")\n'
+        elif xadded_max == 0 and yadded_max == 1:
+            legend_options.append("loc='upper left'")
+            if "legendtitle" in description["yadded"][0]:
+                code += indentation + 'twinx.legend(title=%s, loc="upper right")\n' % _to_code_string(
+                    description["yadded"][0]["legendtitle"])
+            else:
+                code += indentation + 'twinx.legend(loc="upper right")\n'
         else:
-            code += indentation + container + '.legend()\n'
+            # TODO: Consider the possibility of both axes different
+            logger.warning("Ignoring not simple twin legend")
+        code += indentation + container + '.legend(%s)\n' % ", ".join(legend_options)
+
     if "xlabel" in description:
         code += indentation + container + ('.' if current_axes else '.set_') + 'xlabel(%s)\n' % _to_code_string(
             description["xlabel"])
