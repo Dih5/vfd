@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 fig, ax = plt.subplots()
 twiny = ax.twiny()
 ax.plot([1.0, 2.0, 3.0], [1.0, 2.0, 9.0], label='Dum')
-twiny.semilogx([1.0, 2.0, 3.0], [1.0, 1.5, 1.0], label='Dee')
+twiny.semilogx([1.0, 2.0, 3.0], [1.0, 1.5, 1.0], label='Dee', color="C1")
 ax.set_xlabel("Tweedledum")
 twiny.set_xlabel("Tweedledee")
 twiny.set_xlim(0.1, 2.1)

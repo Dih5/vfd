@@ -316,7 +316,7 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
         code += indentation + "twinx = %s.twinx()\n" % container
     # TODO: Consider the possibility of both axes different
 
-    for s in description["series"]:
+    for series_index, s in enumerate(description["series"]):
         y = s["y"]
         if "x" in s:
             args = [s["x"], y]
@@ -349,6 +349,10 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
             series_container = "twiny"
         elif series_yaxis:
             series_container = "twinx"
+
+        # If a secondary axis is used, color should be specifically set to avoid repetition
+        if series_xaxis or series_yaxis and "color" not in kwargs:
+            kwargs["color"] = "C" + str(series_index)
 
         if any([i in s for i in {"xerr", "xmax", "xmin", "yerr", "ymin", "ymax"}]):
             # Error bar plot
