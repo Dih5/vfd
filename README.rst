@@ -39,3 +39,13 @@ Features
 * CLI and python package to plot the files with matplotlib.
 * API mimicking matplotlib's to generate files without changing your code.
 * While version<1.0.0, minor releases will mean API compatibility is broken.
+
+Instalation
+-----------
+To install the latest release, assuming you have a Python_ distribution with pip_::
+
+    $ pip install vfd
+.. _Python: http://www.python.org/
+.. _pip: https://pip.pypa.io/en/stable/installing/
+
+If you want to enable bash autocompletion add ``eval "$(_VFD_COMPLETE=source vfd)"`` to your ``.bashrc`` file.
