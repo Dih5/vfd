@@ -31,6 +31,11 @@ except ImportError:
     import Tkinter as tk
     import Tkinter.filedialog as tkfiledialog
 
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
+
 from . import vfd
 from . import __version__
 
@@ -141,6 +146,37 @@ class ParBox:
         return self.frame.pack(*args, **kwargs)
 
 
+class StyleDialog(tk.Frame, object):
+    def __init__(self, master=None):
+        # BEWARE: master being None will result in adding the dialog to the main window and closing it when the dialog
+        # does so.
+        if master is not None:
+            master = tk.Toplevel(master)
+        self.master = master
+        super(StyleDialog, self).__init__(master=master)
+
+        self.master.title("Select style(s)")
+
+        self.style_list = ['default', 'classic'] + sorted(style for style in plt.style.available if style != 'classic')
+
+        self.lst_styles = tk.Listbox(master=self, selectmode=tk.EXTENDED)
+        for item in self.style_list:
+            self.lst_styles.insert(tk.END, item)
+        self.lst_styles.pack(side=tk.TOP)
+
+        self.btn_ok = tk.Button(self, text="OK", command=self.choose)
+        self.btn_ok.pack(side=tk.BOTTOM)
+
+        self.choice = None
+
+        self.pack()
+
+    def choose(self):
+        pos = list(map(int, self.lst_styles.curselection()))  # int conversion needed for very old Tk
+        self.choice = ", ".join([self.style_list[i] for i in pos])
+        self.master.destroy()
+
+
 class VfdGui(tk.Frame, object):
 
     def __init__(self, master=None):
@@ -198,6 +234,8 @@ class VfdGui(tk.Frame, object):
         self.preview_style = ParBox(self.preview_toolbar, self.var_style, pre_text="Style",
                                     help_text="Matplotlib style(s) to use in the plot.")
         self.preview_style.pack(side=tk.LEFT)
+        self.btn_preview_style = tk.Button(self.preview_toolbar, text="...", command=self.style_dialog)
+        self.btn_preview_style.pack(side=tk.LEFT)
 
         self.var_tight = tk.IntVar()
         self.var_tight.set(0)
@@ -238,6 +276,12 @@ class VfdGui(tk.Frame, object):
 
         self.temp_vfd = os.path.join(self.temp_dir, "vfdgui.vfd")
 
+    def style_dialog(self):
+        dialog = StyleDialog(master=self)
+        self.wait_window(dialog)
+        if dialog.choice is not None:
+            self.var_style.set(dialog.choice)
+
     def open_choose(self):
         file = tkfiledialog.askopenfile(parent=self, mode='r', filetypes=(("VFD file", "*.vfd"), ("all files", "*.*")),
                                         title='Open a VFD')
@@ -259,7 +303,9 @@ class VfdGui(tk.Frame, object):
 
     def refresh(self):
         self.update_temp_file()
-        style = self.var_style.get()  # TODO: To list
+        style = self.var_style.get()
+        if "," in style:
+            style = list(filter(None, (s.strip() for s in style.split(","))))
         tight = self.var_tight.get()
 
         vfd.create_scripts(self.temp_vfd, context=style, tight_layout=tight, run=True, blocking=True,
