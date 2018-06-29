@@ -19,7 +19,10 @@ except ImportError:
 from . import vfd
 from . import __version__
 
-img_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img")
+_ico_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img")
+
+def get_ico_path(name):
+    return os.path.join(_ico_path, name)
 
 
 class CreateToolTip(object):
@@ -141,22 +144,34 @@ class VfdGui(tk.Frame, object):
         # Create the toolbar
         self.toolbar = tk.Frame(self, bd=1, relief=tk.RAISED)
 
-        self.img_open = ImageTk.PhotoImage(Image.open(os.path.join(img_path, "document-open.png")))
+        self.img_open = ImageTk.PhotoImage(Image.open(get_ico_path("document-open.png")))
         self.btn_open = tk.Button(self.toolbar, image=self.img_open, relief=tk.FLAT, command=self.open_choose)
         self.btn_open.pack(side=tk.LEFT, padx=2, pady=2)
         self.btn_open_tt = CreateToolTip(self.btn_open, "Open")
 
-        self.img_xlsx = ImageTk.PhotoImage(Image.open(os.path.join(img_path, "x-office-spreadsheet.png")))
+        self.img_xlsx = ImageTk.PhotoImage(Image.open(get_ico_path("x-office-spreadsheet.png")))
         self.btn_xlsx = tk.Button(self.toolbar, image=self.img_xlsx, relief=tk.FLAT, command=self.export_xlsx_choose)
         self.btn_xlsx.pack(side=tk.LEFT, padx=2, pady=2)
         self.btn_xlsx_tt = CreateToolTip(self.btn_xlsx, "Export as xlsx")
 
-        self.img_exit = ImageTk.PhotoImage(Image.open(os.path.join(img_path, "system-log-out.png")))
+        self.img_exit = ImageTk.PhotoImage(Image.open(get_ico_path("system-log-out.png")))
         self.btn_exit = tk.Button(self.toolbar, image=self.img_exit, relief=tk.FLAT, command=self.quit)
         self.btn_exit.pack(side=tk.LEFT, padx=2, pady=2)
         self.btn_exit_tt = CreateToolTip(self.btn_exit, "Quit")
 
-        self.toolbar.pack(side=tk.TOP, fill=tk.X)
+        self.toolbar.pack(side=tk.TOP, fill=tk.X, expand=1)
+
+        # Create the editor frame
+        self.editor_frame = tk.LabelFrame(self, text="Edit VFD")
+        self.txt_editor = tk.Text(master=self.editor_frame)
+        self.scr_txt_editor = tk.Scrollbar(self.editor_frame, orient=tk.VERTICAL)
+        self.txt_editor.config(yscrollcommand=self.scr_txt_editor.set)
+        self.scr_txt_editor.config(command=self.txt_editor.yview)
+
+        self.scr_txt_editor.pack(side=tk.RIGHT, fill=tk.Y)
+        self.txt_editor.pack(fill=tk.BOTH, expand=1)
+
+        self.editor_frame.pack(side=tk.LEFT,fill=tk.BOTH, expand=1)
 
         # Create the matplotlib frame
         self.mpl_frame = tk.LabelFrame(self, text="Matplotlib render")
@@ -174,12 +189,12 @@ class VfdGui(tk.Frame, object):
         self.chk_tight_tt = CreateToolTip(self.chk_tight, "Use a tight layout?")
         self.chk_tight.pack(side=tk.LEFT)
 
-        self.img_refresh = ImageTk.PhotoImage(Image.open(os.path.join(img_path, "go-jump.png")))
+        self.img_refresh = ImageTk.PhotoImage(Image.open(get_ico_path("go-jump.png")))
         self.btn_refresh = tk.Button(self.preview_toolbar, image=self.img_refresh, relief=tk.FLAT, command=self.refresh)
         self.btn_refresh_tt = CreateToolTip(self.btn_refresh, "Refresh preview")
         self.btn_refresh.pack(side=tk.RIGHT)
 
-        self.img_img = ImageTk.PhotoImage(Image.open(os.path.join(img_path, "image-x-generic.png")))
+        self.img_img = ImageTk.PhotoImage(Image.open(get_ico_path("image-x-generic.png")))
         self.btn_img_export = tk.Button(self.preview_toolbar, image=self.img_img, relief=tk.FLAT, command=self.refresh)
         self.btn_img_export_tt = CreateToolTip(self.btn_img_export, "Export plot")
         self.btn_img_export.pack(side=tk.RIGHT)
@@ -189,7 +204,7 @@ class VfdGui(tk.Frame, object):
         self.preview = tk.Label(self.mpl_frame, text="Preview will be shown here")
         self.preview.pack(side=tk.BOTTOM)
 
-        self.mpl_frame.pack(side=tk.RIGHT)
+        self.mpl_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=1)
 
         # UI is ready, pack it
         self.pack()
@@ -204,6 +219,11 @@ class VfdGui(tk.Frame, object):
 
     def open(self, path):
         self.file_path = path
+        with open(path, 'r') as file:
+            text = file.read()
+
+        self.txt_editor.delete(1.0, tk.END)
+        self.txt_editor.insert(tk.END, text)
         self.refresh()
 
     def refresh(self):
