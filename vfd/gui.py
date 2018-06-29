@@ -4,6 +4,20 @@
 
 import sys
 import os
+import tempfile
+
+try:
+    from tempfile import TemporaryDirectory
+except ImportError:
+    class TemporaryDirectory(object):
+        """Py2-compatible tempfile.TemporaryDirectory"""
+
+        def __enter__(self):
+            self.dir_name = tempfile.mkdtemp()
+            return self.dir_name
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            shutil.rmtree(self.dir_name)
 
 import shutil
 from PIL import Image, ImageTk
@@ -20,6 +34,7 @@ from . import vfd
 from . import __version__
 
 _ico_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img")
+
 
 def get_ico_path(name):
     return os.path.join(_ico_path, name)
@@ -130,7 +145,7 @@ class VfdGui(tk.Frame, object):
     def __init__(self, master=None):
         super(VfdGui, self).__init__(master=master)
 
-        self.master.title("".join(('VFD GUI v', __version__)))
+        self.master.title("".join(('VFD v', __version__, ' GUI')))
 
         # Create the menu bar
         self.menu = tk.Menu(self.master)
@@ -171,7 +186,7 @@ class VfdGui(tk.Frame, object):
         self.scr_txt_editor.pack(side=tk.RIGHT, fill=tk.Y)
         self.txt_editor.pack(fill=tk.BOTH, expand=1)
 
-        self.editor_frame.pack(side=tk.LEFT,fill=tk.BOTH, expand=1)
+        self.editor_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
 
         # Create the matplotlib frame
         self.mpl_frame = tk.LabelFrame(self, text="Matplotlib render")
@@ -211,6 +226,17 @@ class VfdGui(tk.Frame, object):
 
         self.file_path = None
 
+        # Create and prepare a temporary directory
+        self._temp_dir = TemporaryDirectory()
+        self.temp_dir = str(self._temp_dir)
+        try:
+            os.makedirs(self.temp_dir)
+        except OSError:
+            # Either already existing or unable to create it
+            pass
+
+        self.temp_vfd = os.path.join(self.temp_dir, "vfdgui.vfd")
+
     def open_choose(self):
         file = tkfiledialog.askopenfile(parent=self, mode='r', filetypes=(("VFD file", "*.vfd"), ("all files", "*.*")),
                                         title='Open a VFD')
@@ -226,20 +252,23 @@ class VfdGui(tk.Frame, object):
         self.txt_editor.insert(tk.END, text)
         self.refresh()
 
-    def refresh(self):
-        if self.file_path:
-            style = self.var_style.get()  # TODO: To list
-            tight = self.var_tight.get()
+    def update_temp_file(self):
+        with open(self.temp_vfd, 'w') as file:
+            file.write(self.txt_editor.get(1.0, tk.END))
 
-            vfd.create_scripts(self.file_path, context=style, tight_layout=tight, run=True, blocking=True,
-                               export_format=["png"])
-            self.update_preview()
+    def refresh(self):
+        self.update_temp_file()
+        style = self.var_style.get()  # TODO: To list
+        tight = self.var_tight.get()
+
+        vfd.create_scripts(self.temp_vfd, context=style, tight_layout=tight, run=True, blocking=True,
+                           export_format=["png"])
+        self.update_preview()
 
     def update_preview(self):
-        img = ImageTk.PhotoImage(Image.open(self.file_path[:-3] + "png"))
+        img = ImageTk.PhotoImage(Image.open(os.path.join(self.temp_dir, "vfdgui.png")))
         self.preview.configure(image=img)
         self.preview.image = img
-        pass
 
     def export_xlsx_choose(self):
         file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(("Spreadsheet", "*.xlsx"),),
@@ -247,12 +276,10 @@ class VfdGui(tk.Frame, object):
         if file:
             self.export_xlsx(file)
 
-    def export_xlsx(self, path=None):
-        vfd.create_xlsx(self.file_path)
-        gen_path = self.file_path[:-3] + "xlsx"
-        # TODO: Check if exists
-        if path is not None and path != gen_path:
-            shutil.move(gen_path, path)
+    def export_xlsx(self, path):
+        self.update_temp_file()
+        vfd.create_xlsx(self.temp_vfd)
+        shutil.move(self.temp_vfd[:-3] + "xlsx", path)
 
     def leave(self):
         self.quit()
