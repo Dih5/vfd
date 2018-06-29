@@ -29,13 +29,16 @@ class VfdGui(tk.Frame, object):
 
         self.master.title("".join(('VFD GUI v', __version__)))
 
+        # Create the menu bar
         self.menu = tk.Menu(self.master)
-        self.file_menu = tk.Menu(self.master, tearoff=0)
-        self.file_menu.add_command(label="Open", command=self.open_choose)
+        self.file_menu = tk.Menu(self.menu, tearoff=0)
+        self.file_menu.add_command(label="Open", underline=0, accelerator="Ctrl+O", command=self.open_choose)
         self.file_menu.add_command(label="Export as xlsx", command=self.export_xlsx_choose)
-        self.file_menu.add_command(label="Exit", command=self.leave)
-        self.menu.add_cascade(label="File", menu=self.file_menu)
+        self.file_menu.add_command(label="Quit", underline=0, accelerator="Ctrl+Q", command=self.leave)
+        self.menu.add_cascade(label="File", underline=0, menu=self.file_menu)
+        self.master.config(menu=self.menu)
 
+        # Create the toolbar
         self.toolbar = tk.Frame(self, bd=1, relief=tk.RAISED)
 
         img_open = ImageTk.PhotoImage(Image.open(os.path.join(img_path, "document-open.png")))
@@ -54,8 +57,8 @@ class VfdGui(tk.Frame, object):
         btn_exit.pack(side=tk.LEFT, padx=2, pady=2)
 
         self.toolbar.pack(side=tk.TOP, fill=tk.X)
-        self.master.config(menu=self.menu)
 
+        # Create the preview frame
         self.preview_frame = tk.Frame(self)
 
         self.preview_toolbar = tk.Frame(self.preview_frame, bd=1, relief=tk.RAISED)
@@ -71,6 +74,7 @@ class VfdGui(tk.Frame, object):
 
         self.preview_frame.pack(side=tk.RIGHT)
 
+        # UI is ready, pack it
         self.pack()
 
         self.file_path = None
@@ -78,7 +82,8 @@ class VfdGui(tk.Frame, object):
     def open_choose(self):
         file = tkfiledialog.askopenfile(parent=self, mode='r', filetypes=(("VFD file", "*.vfd"), ("all files", "*.*")),
                                         title='Open a VFD')
-        self.open(file.name)
+        if file:
+            self.open(file.name)
 
     def open(self, path):
         self.file_path = path
@@ -94,7 +99,8 @@ class VfdGui(tk.Frame, object):
     def export_xlsx_choose(self):
         file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(("Spreadsheet", "*.xlsx"),),
                                               title='Export as xlsx')
-        self.export_xlsx(file)
+        if file:
+            self.export_xlsx(file)
 
     def export_xlsx(self, path=None):
         vfd.create_xlsx(self.file_path)
