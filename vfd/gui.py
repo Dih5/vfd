@@ -5,6 +5,7 @@
 import sys
 import os
 import tempfile
+import io
 
 try:
     from tempfile import TemporaryDirectory
@@ -245,7 +246,7 @@ class VfdGui(tk.Frame, object):
 
     def open(self, path):
         self.file_path = path
-        with open(path, 'r') as file:
+        with io.open(path, 'r', encoding='utf8') as file:
             text = file.read()
 
         self.txt_editor.delete(1.0, tk.END)
@@ -253,7 +254,7 @@ class VfdGui(tk.Frame, object):
         self.refresh()
 
     def update_temp_file(self):
-        with open(self.temp_vfd, 'w') as file:
+        with io.open(self.temp_vfd, 'w', encoding='utf8') as file:
             file.write(self.txt_editor.get(1.0, tk.END))
 
     def refresh(self):

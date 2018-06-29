@@ -6,6 +6,7 @@ from glob import glob
 import os
 import subprocess
 import logging
+import io
 
 from jsonschema import validate as validate_schema
 import xlsxwriter
@@ -802,7 +803,7 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
     for file in file_list:
         basename = os.path.basename(file)[:-4]
         pyfile_path = file[:-3] + "py"
-        with open(pyfile_path, "w") as output:
+        with io.open(pyfile_path, "w", encoding='utf8') as output:
             description = json.load(open(file))
             if "type" not in description:
                 raise ValueError("No type in provided file")
