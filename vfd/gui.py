@@ -141,48 +141,55 @@ class VfdGui(tk.Frame, object):
         # Create the toolbar
         self.toolbar = tk.Frame(self, bd=1, relief=tk.RAISED)
 
-        img_open = ImageTk.PhotoImage(Image.open(os.path.join(img_path, "document-open.png")))
-        btn_open = tk.Button(self.toolbar, image=img_open, relief=tk.FLAT, command=self.open_choose)
-        btn_open.image = img_open
-        btn_open.pack(side=tk.LEFT, padx=2, pady=2)
+        self.img_open = ImageTk.PhotoImage(Image.open(os.path.join(img_path, "document-open.png")))
+        self.btn_open = tk.Button(self.toolbar, image=self.img_open, relief=tk.FLAT, command=self.open_choose)
+        self.btn_open.pack(side=tk.LEFT, padx=2, pady=2)
+        self.btn_open_tt = CreateToolTip(self.btn_open, "Open")
 
-        img_xlsx = ImageTk.PhotoImage(Image.open(os.path.join(img_path, "x-office-spreadsheet.png")))
-        btn_xlsx = tk.Button(self.toolbar, image=img_xlsx, relief=tk.FLAT, command=self.export_xlsx_choose)
-        btn_xlsx.image = img_xlsx
-        btn_xlsx.pack(side=tk.LEFT, padx=2, pady=2)
+        self.img_xlsx = ImageTk.PhotoImage(Image.open(os.path.join(img_path, "x-office-spreadsheet.png")))
+        self.btn_xlsx = tk.Button(self.toolbar, image=self.img_xlsx, relief=tk.FLAT, command=self.export_xlsx_choose)
+        self.btn_xlsx.pack(side=tk.LEFT, padx=2, pady=2)
+        self.btn_xlsx_tt = CreateToolTip(self.btn_xlsx, "Export as xlsx")
 
-        img_exit = ImageTk.PhotoImage(Image.open(os.path.join(img_path, "system-log-out.png")))
-        btn_exit = tk.Button(self.toolbar, image=img_exit, relief=tk.FLAT, command=self.quit)
-        btn_exit.image = img_exit
-        btn_exit.pack(side=tk.LEFT, padx=2, pady=2)
+        self.img_exit = ImageTk.PhotoImage(Image.open(os.path.join(img_path, "system-log-out.png")))
+        self.btn_exit = tk.Button(self.toolbar, image=self.img_exit, relief=tk.FLAT, command=self.quit)
+        self.btn_exit.pack(side=tk.LEFT, padx=2, pady=2)
+        self.btn_exit_tt = CreateToolTip(self.btn_exit, "Quit")
 
         self.toolbar.pack(side=tk.TOP, fill=tk.X)
 
-        # Create the preview frame
-        self.preview_frame = tk.Frame(self)
+        # Create the matplotlib frame
+        self.mpl_frame = tk.LabelFrame(self, text="Matplotlib render")
 
-        self.preview_toolbar = tk.Frame(self.preview_frame, bd=1, relief=tk.RAISED)
-        ## Variables
+        self.preview_toolbar = tk.Frame(self.mpl_frame, bd=1, relief=tk.RAISED)
         self.var_style = tk.StringVar()
         self.var_style.set("")
-        self.preview_style = ParBox(self.preview_toolbar, self.var_style, pre_text="Style", help_text="Matplotlib style(s) to use in the plot.")
+        self.preview_style = ParBox(self.preview_toolbar, self.var_style, pre_text="Style",
+                                    help_text="Matplotlib style(s) to use in the plot.")
         self.preview_style.pack(side=tk.LEFT)
 
         self.var_tight = tk.IntVar()
         self.var_tight.set(0)
         self.chk_tight = tk.Checkbutton(self.preview_toolbar, text="Tight", variable=self.var_tight)
+        self.chk_tight_tt = CreateToolTip(self.chk_tight, "Use a tight layout?")
         self.chk_tight.pack(side=tk.LEFT)
 
-        self.preview_refresh = tk.Button(self.preview_toolbar, image=img_xlsx, relief=tk.FLAT,
-                                         command=self.refresh)
-        self.preview_refresh.pack(side=tk.RIGHT)
+        self.img_refresh = ImageTk.PhotoImage(Image.open(os.path.join(img_path, "go-jump.png")))
+        self.btn_refresh = tk.Button(self.preview_toolbar, image=self.img_refresh, relief=tk.FLAT, command=self.refresh)
+        self.btn_refresh_tt = CreateToolTip(self.btn_refresh, "Refresh preview")
+        self.btn_refresh.pack(side=tk.RIGHT)
+
+        self.img_img = ImageTk.PhotoImage(Image.open(os.path.join(img_path, "image-x-generic.png")))
+        self.btn_img_export = tk.Button(self.preview_toolbar, image=self.img_img, relief=tk.FLAT, command=self.refresh)
+        self.btn_img_export_tt = CreateToolTip(self.btn_img_export, "Export plot")
+        self.btn_img_export.pack(side=tk.RIGHT)
 
         self.preview_toolbar.pack(side=tk.TOP)
 
-        self.preview = tk.Label(self.preview_frame, text="Preview will be shown here")
+        self.preview = tk.Label(self.mpl_frame, text="Preview will be shown here")
         self.preview.pack(side=tk.BOTTOM)
 
-        self.preview_frame.pack(side=tk.RIGHT)
+        self.mpl_frame.pack(side=tk.RIGHT)
 
         # UI is ready, pack it
         self.pack()
@@ -204,7 +211,8 @@ class VfdGui(tk.Frame, object):
             style = self.var_style.get()  # TODO: To list
             tight = self.var_tight.get()
 
-            vfd.create_scripts(self.file_path, context=style, tight_layout=tight, run=True, blocking=True, export_format=["png"])
+            vfd.create_scripts(self.file_path, context=style, tight_layout=tight, run=True, blocking=True,
+                               export_format=["png"])
             self.update_preview()
 
     def update_preview(self):
