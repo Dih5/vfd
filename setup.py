@@ -37,6 +37,10 @@ setup(
         'console_scripts': [
             'vfd=vfd.cli:main',
         ],
+        'gui_scripts': [
+            'vfdgui=vfd.gui:main',
+        ],
+
     },
     install_requires=requirements,
     license='LGPLv3+',
