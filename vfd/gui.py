@@ -211,10 +211,12 @@ class VfdGui(tk.Frame, object):
         self.btn_exit.pack(side=tk.LEFT, padx=2, pady=2)
         self.btn_exit_tt = CreateToolTip(self.btn_exit, "Quit")
 
-        self.toolbar.pack(side=tk.TOP, fill=tk.X, expand=1)
+        self.toolbar.pack(side=tk.TOP, fill=tk.X, expand=0)
+
+        self.frm_general = tk.Frame(master=self)
 
         # Create the editor frame
-        self.editor_frame = tk.LabelFrame(self, text="Edit VFD")
+        self.editor_frame = tk.LabelFrame(self.frm_general, text="Edit VFD")
         self.txt_editor = tk.Text(master=self.editor_frame)
         self.scr_txt_editor = tk.Scrollbar(self.editor_frame, orient=tk.VERTICAL)
         self.txt_editor.config(yscrollcommand=self.scr_txt_editor.set)
@@ -226,42 +228,51 @@ class VfdGui(tk.Frame, object):
         self.editor_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
 
         # Create the matplotlib frame
-        self.mpl_frame = tk.LabelFrame(self, text="Matplotlib render")
+        self.mpl_frame = tk.LabelFrame(self.frm_general, text="Matplotlib render")
 
-        self.preview_toolbar = tk.Frame(self.mpl_frame, bd=1, relief=tk.RAISED)
+        self.mpl_toolbar = tk.Frame(self.mpl_frame, bd=1, relief=tk.RAISED)
         self.var_style = tk.StringVar()
         self.var_style.set("")
-        self.preview_style = ParBox(self.preview_toolbar, self.var_style, pre_text="Style",
-                                    help_text="Matplotlib style(s) to use in the plot.")
-        self.preview_style.pack(side=tk.LEFT)
-        self.btn_preview_style = tk.Button(self.preview_toolbar, text="...", command=self.style_dialog)
+        self.mpl_style = ParBox(self.mpl_toolbar, self.var_style, pre_text="Style",
+                                help_text="Matplotlib style(s) to use in the plot.")
+        self.mpl_style.pack(side=tk.LEFT)
+        self.btn_preview_style = tk.Button(self.mpl_toolbar, text="...", command=self.style_dialog)
         self.btn_preview_style.pack(side=tk.LEFT)
 
         self.var_tight = tk.IntVar()
         self.var_tight.set(0)
-        self.chk_tight = tk.Checkbutton(self.preview_toolbar, text="Tight", variable=self.var_tight)
+        self.chk_tight = tk.Checkbutton(self.mpl_toolbar, text="Tight", variable=self.var_tight)
         self.chk_tight_tt = CreateToolTip(self.chk_tight, "Use a tight layout?")
         self.chk_tight.pack(side=tk.LEFT)
 
+        self.var_scale_multi = tk.IntVar()
+        self.var_scale_multi.set(0)
+        self.chk_scale_multi = tk.Checkbutton(self.mpl_toolbar, text="Scale multi", variable=self.var_scale_multi)
+        self.chk_scale_multi_tt = CreateToolTip(self.chk_scale_multi, "Proportionally scale multiplots?")
+        self.chk_scale_multi.pack(side=tk.LEFT)
+
         self.img_refresh = ImageTk.PhotoImage(Image.open(get_ico_path("go-jump.png")))
-        self.btn_refresh = tk.Button(self.preview_toolbar, image=self.img_refresh, relief=tk.FLAT, command=self.refresh)
+        self.btn_refresh = tk.Button(self.mpl_toolbar, image=self.img_refresh, relief=tk.FLAT, command=self.refresh)
         self.btn_refresh_tt = CreateToolTip(self.btn_refresh, "Refresh preview")
         self.btn_refresh.pack(side=tk.RIGHT)
 
         self.img_img = ImageTk.PhotoImage(Image.open(get_ico_path("image-x-generic.png")))
-        self.btn_img_export = tk.Button(self.preview_toolbar, image=self.img_img, relief=tk.FLAT, command=self.refresh)
+        self.btn_img_export = tk.Button(self.mpl_toolbar, image=self.img_img, relief=tk.FLAT,
+                                        command=self.mpl_export_choose)
         self.btn_img_export_tt = CreateToolTip(self.btn_img_export, "Export plot")
         self.btn_img_export.pack(side=tk.RIGHT)
 
-        self.preview_toolbar.pack(side=tk.TOP)
+        self.mpl_toolbar.pack(side=tk.TOP, fill=tk.X, expand=0)
 
         self.preview = tk.Label(self.mpl_frame, text="Preview will be shown here")
-        self.preview.pack(side=tk.BOTTOM)
+        self.preview.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=1)
 
         self.mpl_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=1)
 
+        self.frm_general.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=1)
+
         # UI is ready, pack it
-        self.pack()
+        self.pack(fill=tk.BOTH, expand=1)
 
         self.file_path = None
 
@@ -302,15 +313,35 @@ class VfdGui(tk.Frame, object):
             file.write(self.txt_editor.get(1.0, tk.END))
 
     def refresh(self):
+        self.mpl_create_img("png")
+        self.update_preview()
+
+    def mpl_export_choose(self):
+        file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(
+            ("Portable Network Graphics", "*.png"), ("Portable Document Format", "*.pdf"), ("PostScript", "*.ps"),
+            ("Encapsulated PostScript", "*.eps"), ("Scalable Vector Graphics", "*.svg"), ("JPEG", "*.jpg"),
+            ("Any supported format", "*")), title='Export using matplotlib')
+        if file:
+            self.mpl_export(file)
+
+    def mpl_export(self, path):
+        file_name = os.path.basename(path)
+        if "." not in file_name:
+            raise ValueError("No extension in path %s" % path)
+        ext = file_name.split(".")[-1]
+        self.mpl_create_img(ext)
+        shutil.copyfile(os.path.join(self.temp_dir, "vfdgui." + ext), path)
+
+    def mpl_create_img(self, format):
         self.update_temp_file()
         style = self.var_style.get()
         if "," in style:
             style = list(filter(None, (s.strip() for s in style.split(","))))
-        tight = self.var_tight.get()
+        tight = bool(self.var_tight.get())
+        scale_multi = bool(self.var_tight.get())
 
         vfd.create_scripts(self.temp_vfd, context=style, tight_layout=tight, run=True, blocking=True,
-                           export_format=["png"])
-        self.update_preview()
+                           export_format=[format], scale_multiplot=scale_multi)
 
     def update_preview(self):
         img = ImageTk.PhotoImage(Image.open(os.path.join(self.temp_dir, "vfdgui.png")))
