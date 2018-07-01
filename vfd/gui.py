@@ -195,9 +195,14 @@ class VfdGui(tk.Frame, object):
         self.menu = tk.Menu(self.master)
         self.file_menu = tk.Menu(self.menu, tearoff=0)
         self.file_menu.add_command(label="Open", underline=0, accelerator="Ctrl+O", command=self.open_choose)
-        self.file_menu.add_command(label="Export as xlsx", command=self.export_xlsx_choose)
+        self.file_menu.add_command(label="Save as...", underline=0, accelerator="Ctrl+S", command=self.save_choose)
+        self.file_menu.add_command(label="Export as xlsx...", command=self.export_xlsx_choose)
         self.file_menu.add_command(label="Quit", underline=0, accelerator="Ctrl+Q", command=self.leave)
         self.menu.add_cascade(label="File", underline=0, menu=self.file_menu)
+        self.mpl_menu = tk.Menu(self.menu, tearoff=0)
+        self.mpl_menu.add_command(label="Export image...", command=self.mpl_export_choose)
+        self.mpl_menu.add_command(label="Refresh preview", accelerator="Ctrl+R", command=self.refresh)
+        self.menu.add_cascade(label="Matplotlib", menu=self.mpl_menu)
         self.master.config(menu=self.menu)
 
         # Create the toolbar
@@ -207,6 +212,11 @@ class VfdGui(tk.Frame, object):
         self.btn_open = tk.Button(self.toolbar, image=self.img_open, relief=tk.FLAT, command=self.open_choose)
         self.btn_open.pack(side=tk.LEFT, padx=2, pady=2)
         self.btn_open_tt = CreateToolTip(self.btn_open, "Open")
+
+        self.img_save = ImageTk.PhotoImage(Image.open(get_ico_path("document-save-as.png")))
+        self.btn_save = tk.Button(self.toolbar, image=self.img_save, relief=tk.FLAT, command=self.save_choose)
+        self.btn_save.pack(side=tk.LEFT, padx=2, pady=2)
+        self.btn_save_tt = CreateToolTip(self.btn_save, "Save VFD")
 
         self.img_xlsx = ImageTk.PhotoImage(Image.open(get_ico_path("x-office-spreadsheet.png")))
         self.btn_xlsx = tk.Button(self.toolbar, image=self.img_xlsx, relief=tk.FLAT, command=self.export_xlsx_choose)
@@ -323,8 +333,7 @@ class VfdGui(tk.Frame, object):
         self.refresh()
 
     def update_temp_file(self):
-        with io.open(self.temp_vfd, 'w', encoding='utf8') as file:
-            file.write(self.txt_editor.get(1.0, tk.END))
+        self.save(self.temp_vfd)
 
     def refresh(self):
         self.mpl_create_img("png")
@@ -372,6 +381,17 @@ class VfdGui(tk.Frame, object):
 
         self.image = ImageTk.PhotoImage(image)
         self.preview.configure(image=self.image)
+
+    def save_choose(self):
+        # TODO: Check if well formed
+        file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(("Vernacular Figure Description", "*.vfd"),),
+                                              title='Save VFD', initialfile=self.file_path if self.file_path else None)
+        if file:
+            self.save(file)
+
+    def save(self, path):
+        with io.open(path, 'w', encoding='utf8') as file:
+            file.write(self.txt_editor.get(1.0, tk.END))
 
     def export_xlsx_choose(self):
         file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(("Spreadsheet", "*.xlsx"),),
