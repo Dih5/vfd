@@ -285,6 +285,8 @@ class VfdGui(tk.Frame, object):
         self.file_path = None
         # StyleDialog instance opened
         self.style_dialog = None
+        # Preview image
+        self.image = None
 
         # Create and prepare a temporary directory
         self._temp_dir = TemporaryDirectory()
@@ -356,9 +358,20 @@ class VfdGui(tk.Frame, object):
                            export_format=[format], scale_multiplot=scale_multi)
 
     def update_preview(self):
-        img = ImageTk.PhotoImage(Image.open(os.path.join(self.temp_dir, "vfdgui.png")))
-        self.preview.configure(image=img)
-        self.preview.image = img
+        image = Image.open(os.path.join(self.temp_dir, "vfdgui.png"))
+        # Image will be reduced if very big
+        # Find the scale best fitting half of the screen
+        max_width = self.master.winfo_screenwidth() / 2
+        max_height = self.master.winfo_screenheight() / 2
+        width, height = image.size
+        scale = max(max_width / width, max_height / height)
+
+        if scale < 1:  # Reduce, but not increase
+            new_width, new_height = int(scale * width), int(scale * height)
+            image = image.resize((new_width, new_height), Image.ANTIALIAS)  # The (250, 250) is (height, width)
+
+        self.image = ImageTk.PhotoImage(image)
+        self.preview.configure(image=self.image)
 
     def export_xlsx_choose(self):
         file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(("Spreadsheet", "*.xlsx"),),
