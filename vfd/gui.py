@@ -159,17 +159,24 @@ class StyleDialog(tk.Frame, object):
 
         self.style_list = ['default', 'classic'] + sorted(style for style in plt.style.available if style != 'classic')
 
-        self.lst_styles = tk.Listbox(master=self, selectmode=tk.EXTENDED)
+        self.frm_lst_styles = tk.Frame(master=self)
+        self.lst_styles = tk.Listbox(master=self.frm_lst_styles, selectmode=tk.EXTENDED)
         for item in self.style_list:
             self.lst_styles.insert(tk.END, item)
-        self.lst_styles.pack(side=tk.TOP)
+        self.scr_lst_styles = tk.Scrollbar(master=self.frm_lst_styles, orient=tk.VERTICAL)
+        self.lst_styles.config(yscrollcommand=self.scr_lst_styles.set)
+        self.scr_lst_styles.config(command=self.lst_styles.yview)
+
+        self.scr_lst_styles.pack(side=tk.RIGHT, fill=tk.Y)
+        self.lst_styles.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
+        self.frm_lst_styles.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
         self.btn_ok = tk.Button(self, text="OK", command=self.choose)
-        self.btn_ok.pack(side=tk.BOTTOM)
+        self.btn_ok.pack(side=tk.BOTTOM, fill=tk.X)
 
         self.choice = None
 
-        self.pack()
+        self.pack(fill=tk.BOTH, expand=1)
 
     def choose(self):
         pos = list(map(int, self.lst_styles.curselection()))  # int conversion needed for very old Tk
@@ -236,7 +243,7 @@ class VfdGui(tk.Frame, object):
         self.mpl_style = ParBox(self.mpl_toolbar, self.var_style, pre_text="Style",
                                 help_text="Matplotlib style(s) to use in the plot.")
         self.mpl_style.pack(side=tk.LEFT)
-        self.btn_preview_style = tk.Button(self.mpl_toolbar, text="...", command=self.style_dialog)
+        self.btn_preview_style = tk.Button(self.mpl_toolbar, text="...", command=self.open_style_dialog)
         self.btn_preview_style.pack(side=tk.LEFT)
 
         self.var_tight = tk.IntVar()
@@ -274,7 +281,10 @@ class VfdGui(tk.Frame, object):
         # UI is ready, pack it
         self.pack(fill=tk.BOTH, expand=1)
 
+        # Path of the opened file
         self.file_path = None
+        # StyleDialog instance opened
+        self.style_dialog = None
 
         # Create and prepare a temporary directory
         self._temp_dir = TemporaryDirectory()
@@ -287,11 +297,13 @@ class VfdGui(tk.Frame, object):
 
         self.temp_vfd = os.path.join(self.temp_dir, "vfdgui.vfd")
 
-    def style_dialog(self):
-        dialog = StyleDialog(master=self)
-        self.wait_window(dialog)
-        if dialog.choice is not None:
-            self.var_style.set(dialog.choice)
+    def open_style_dialog(self):
+        if self.style_dialog is None:
+            self.style_dialog = StyleDialog(master=self)
+            self.wait_window(self.style_dialog)
+            if self.style_dialog.choice is not None:
+                self.var_style.set(self.style_dialog.choice)
+            self.style_dialog = None
 
     def open_choose(self):
         file = tkfiledialog.askopenfile(parent=self, mode='r', filetypes=(("VFD file", "*.vfd"), ("all files", "*.*")),
