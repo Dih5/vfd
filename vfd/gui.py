@@ -310,6 +310,7 @@ class VfdGui(tk.Frame, object):
         self.temp_vfd = os.path.join(self.temp_dir, "vfdgui.vfd")
 
     def open_style_dialog(self):
+        """Open the mpl style selection dialog"""
         if self.style_dialog is None:
             self.style_dialog = StyleDialog(master=self)
             self.wait_window(self.style_dialog)
@@ -318,12 +319,14 @@ class VfdGui(tk.Frame, object):
             self.style_dialog = None
 
     def open_choose(self):
+        """Show a dialog to choose which VFD to open"""
         file = tkfiledialog.askopenfile(parent=self, mode='r', filetypes=(("VFD file", "*.vfd"), ("all files", "*.*")),
                                         title='Open a VFD')
         if file:
             self.open(file.name)
 
     def open(self, path):
+        """Open the VFD in the given path"""
         self.file_path = path
         with io.open(path, 'r', encoding='utf8') as file:
             text = file.read()
@@ -333,13 +336,16 @@ class VfdGui(tk.Frame, object):
         self.refresh()
 
     def update_temp_file(self):
+        """Update the vfd in temp dir"""
         self.save(self.temp_vfd)
 
     def refresh(self):
+        """Recreate the image and update the preview"""
         self.mpl_create_img("png")
         self.update_preview()
 
     def mpl_export_choose(self):
+        """Show a dialog to choose where to export a mpl-generated plot"""
         file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(
             ("Portable Network Graphics", "*.png"), ("Portable Document Format", "*.pdf"), ("PostScript", "*.ps"),
             ("Encapsulated PostScript", "*.eps"), ("Scalable Vector Graphics", "*.svg"), ("JPEG", "*.jpg"),
@@ -348,6 +354,7 @@ class VfdGui(tk.Frame, object):
             self.mpl_export(file)
 
     def mpl_export(self, path):
+        """Export using mpl to the given path"""
         file_name = os.path.basename(path)
         if "." not in file_name:
             raise ValueError("No extension in path %s" % path)
@@ -356,6 +363,7 @@ class VfdGui(tk.Frame, object):
         shutil.copyfile(os.path.join(self.temp_dir, "vfdgui." + ext), path)
 
     def mpl_create_img(self, format):
+        """Use the temp dir to create an image with the given format"""
         self.update_temp_file()
         style = self.var_style.get()
         if "," in style:
@@ -367,6 +375,7 @@ class VfdGui(tk.Frame, object):
                            export_format=[format], scale_multiplot=scale_multi)
 
     def update_preview(self):
+        """Update the preview image using the one in the temp dir"""
         image = Image.open(os.path.join(self.temp_dir, "vfdgui.png"))
         # Image will be reduced if very big
         # Find the scale best fitting half of the screen
@@ -383,6 +392,7 @@ class VfdGui(tk.Frame, object):
         self.preview.configure(image=self.image)
 
     def save_choose(self):
+        """Show a dialog to choose where to save the edited VFD file"""
         # TODO: Check if well formed
         file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(("Vernacular Figure Description", "*.vfd"),),
                                               title='Save VFD', initialfile=self.file_path if self.file_path else None)
@@ -390,21 +400,25 @@ class VfdGui(tk.Frame, object):
             self.save(file)
 
     def save(self, path):
+        """Save the edited VFD to the given path"""
         with io.open(path, 'w', encoding='utf8') as file:
             file.write(self.txt_editor.get(1.0, tk.END))
 
     def export_xlsx_choose(self):
+        """Show a dialog to choose where to export in xlsx format"""
         file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(("Spreadsheet", "*.xlsx"),),
                                               title='Export as xlsx')
         if file:
             self.export_xlsx(file)
 
     def export_xlsx(self, path):
+        """Export as xlsx to the given path"""
         self.update_temp_file()
         vfd.create_xlsx(self.temp_vfd)
         shutil.move(self.temp_vfd[:-3] + "xlsx", path)
 
     def leave(self):
+        """Exit the application"""
         self.quit()
 
 
