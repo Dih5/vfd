@@ -7,19 +7,6 @@ import os
 import tempfile
 import io
 
-try:
-    from tempfile import TemporaryDirectory
-except ImportError:
-    class TemporaryDirectory(object):
-        """Py2-compatible tempfile.TemporaryDirectory"""
-
-        def __enter__(self):
-            self.dir_name = tempfile.mkdtemp()
-            return self.dir_name
-
-        def __exit__(self, exc_type, exc_value, traceback):
-            shutil.rmtree(self.dir_name)
-
 import shutil
 from PIL import Image, ImageTk
 
@@ -224,7 +211,7 @@ class VfdGui(tk.Frame, object):
         self.btn_xlsx_tt = CreateToolTip(self.btn_xlsx, "Export as xlsx")
 
         self.img_exit = ImageTk.PhotoImage(Image.open(get_ico_path("system-log-out.png")))
-        self.btn_exit = tk.Button(self.toolbar, image=self.img_exit, relief=tk.FLAT, command=self.quit)
+        self.btn_exit = tk.Button(self.toolbar, image=self.img_exit, relief=tk.FLAT, command=self.leave)
         self.btn_exit.pack(side=tk.LEFT, padx=2, pady=2)
         self.btn_exit_tt = CreateToolTip(self.btn_exit, "Quit")
 
@@ -298,16 +285,12 @@ class VfdGui(tk.Frame, object):
         # Preview image
         self.image = None
 
-        # Create and prepare a temporary directory
-        self._temp_dir = TemporaryDirectory()
-        self.temp_dir = str(self._temp_dir)
-        try:
-            os.makedirs(self.temp_dir)
-        except OSError:
-            # Either already existing or unable to create it
-            pass
+        # Create a temporary directory
+        self.temp_dir = tempfile.mkdtemp()
 
         self.temp_vfd = os.path.join(self.temp_dir, "vfdgui.vfd")
+
+        self.master.protocol("WM_DELETE_WINDOW", self.leave)
 
     def open_style_dialog(self):
         """Open the mpl style selection dialog"""
@@ -419,6 +402,7 @@ class VfdGui(tk.Frame, object):
 
     def leave(self):
         """Exit the application"""
+        shutil.rmtree(self.temp_dir)
         self.quit()
 
 
