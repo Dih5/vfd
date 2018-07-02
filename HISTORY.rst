@@ -2,6 +2,15 @@
 History
 =======
 
+0.2.1 (2018-07-03)
+------------------
+
+* Added GUI.
+* Added minimal twin axes support.
+* Added xlsx export.
+* Work with UTF8 in Python2.
+* Some minor improvements and fixes.
+
 0.2.0 (2018-06-08)
 ------------------
 
