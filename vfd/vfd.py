@@ -6,6 +6,8 @@ from glob import glob
 import os
 import subprocess
 import logging
+import io
+import sys
 
 from jsonschema import validate as validate_schema
 import xlsxwriter
@@ -215,22 +217,6 @@ def _full_errorbar(values, error_limit, error, positive):
         return [0] * len(values)
 
 
-def _to_code_string(string):
-    """
-    Transform a string into a suitable representation of print code.
-
-    E.g. in printed form: O'Hara -> r'O\'Hara'
-
-    """
-    if '"' not in string:
-        return 'r"' + string + '"'
-    elif "'" not in string:
-        return "r'" + string + "'"
-    else:
-        # Double the original backslash first, then escape the ""
-        return '"' + string.replace("\\", "\\\\").replace('"', '\\"') + '"'
-
-
 def _get_style(description):
     """
     Get the kwargs from a style_schema
@@ -415,20 +401,20 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
         # Find out options needed for the main legend, checking added axis and adding their legends before
         legend_options = []
         if "legendtitle" in description:
-            legend_options.append("title=" + _to_code_string(description["legendtitle"]))
+            legend_options.append("title=" + repr(description["legendtitle"]))
         if xadded_max == yadded_max == 0:
             pass
         elif xadded_max == 1 and yadded_max == 0:
             legend_options.append("loc='lower right'")
             if "legendtitle" in description["xadded"][0]:
-                code += indentation + 'twiny.legend(title=%s, loc="upper right")\n' % _to_code_string(
+                code += indentation + 'twiny.legend(title=%s, loc="upper right")\n' % repr(
                     description["xadded"][0]["legendtitle"])
             else:
                 code += indentation + 'twiny.legend(loc="upper right")\n'
         elif xadded_max == 0 and yadded_max == 1:
             legend_options.append("loc='upper left'")
             if "legendtitle" in description["yadded"][0]:
-                code += indentation + 'twinx.legend(title=%s, loc="upper right")\n' % _to_code_string(
+                code += indentation + 'twinx.legend(title=%s, loc="upper right")\n' % repr(
                     description["yadded"][0]["legendtitle"])
             else:
                 code += indentation + 'twinx.legend(loc="upper right")\n'
@@ -438,16 +424,16 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
         code += indentation + container + '.legend(%s)\n' % ", ".join(legend_options)
 
     if "xlabel" in description:
-        code += indentation + container + ('.' if current_axes else '.set_') + 'xlabel(%s)\n' % _to_code_string(
+        code += indentation + container + ('.' if current_axes else '.set_') + 'xlabel(%s)\n' % repr(
             description["xlabel"])
     if "ylabel" in description:
-        code += indentation + container + ('.' if current_axes else '.set_') + 'ylabel(%s)\n' % _to_code_string(
+        code += indentation + container + ('.' if current_axes else '.set_') + 'ylabel(%s)\n' % repr(
             description["ylabel"])
 
     # Added axes
     if xadded_max == 1:
         if "label" in description["xadded"][0]:
-            code += indentation + "twiny.set_xlabel(%s)\n" % _to_code_string(description["xadded"][0]["label"])
+            code += indentation + "twiny.set_xlabel(%s)\n" % repr(description["xadded"][0]["label"])
         if "range" in description["xadded"][0]:
             code += indentation + 'twiny.set_xlim(%f,%f)\n' % tuple(description["xadded"][0]["range"])
         if "log" in description["xadded"][0] and description["xadded"][0]["log"]:
@@ -455,7 +441,7 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
 
     if yadded_max == 1:
         if "label" in description["yadded"][0]:
-            code += indentation + "twinx.set_ylabel(%s)\n" % _to_code_string(description["yadded"][0]["label"])
+            code += indentation + "twinx.set_ylabel(%s)\n" % repr(description["yadded"][0]["label"])
         if "range" in description["yadded"][0]:
             code += indentation + 'twinx.set_ylim(%f,%f)\n' % tuple(description["yadded"][0]["range"])
         if "log" in description["yadded"][0] and description["yadded"][0]["log"]:
@@ -466,16 +452,16 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
         # This is useful for multiplots, where an upper title can be confusing.
         if title_inside:
             code += indentation + container + '.text(.5,.95,%s, horizontalalignment="center",' \
-                                              'transform=%s.transAxes)\n' % (_to_code_string(description["title"]),
+                                              'transform=%s.transAxes)\n' % (repr(description["title"]),
                                                                              container)
         else:
-            code += indentation + container + ('.' if current_axes else '.set_') + 'title(%s)\n' % _to_code_string(
+            code += indentation + container + ('.' if current_axes else '.set_') + 'title(%s)\n' % repr(
                 description["title"])
     if "epilog" in description:
         for directive in description["epilog"]:
             if directive["type"] == "text":
                 code += indentation + container + ".text(%f, %f, %s)\n" % (
-                    directive["x"], directive["y"], _to_code_string(directive["text"]))
+                    directive["x"], directive["y"], repr(directive["text"]))
                 pass
             else:
                 raise ValueError("Unknown epilog directive: " + directive["type"])
@@ -560,13 +546,13 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
         pass
 
     if "xlabel" in description:
-        code += indentation + container + ('.' if current_axes else '.set_') + 'xlabel(%s)\n' % _to_code_string(
+        code += indentation + container + ('.' if current_axes else '.set_') + 'xlabel(%s)\n' % repr(
             description["xlabel"])
     if "ylabel" in description:
-        code += indentation + container + ('.' if current_axes else '.set_') + 'ylabel(%s)\n' % _to_code_string(
+        code += indentation + container + ('.' if current_axes else '.set_') + 'ylabel(%s)\n' % repr(
             description["ylabel"])
     if "title" in description and description["title"]:
-        code += indentation + container + ('.' if current_axes else '.set_') + 'title(%s)\n' % _to_code_string(
+        code += indentation + container + ('.' if current_axes else '.set_') + 'title(%s)\n' % repr(
             description["title"])
 
     # If contour lines, label them. Otherwise, add the colorbar.
@@ -613,9 +599,9 @@ def create_matplotlib_script(description, export_name="untitled", context=None, 
     indentation_level = 0
     if context is not None and context:
         if isinstance(context, str):
-            code += "with plt.style.context(%s):\n" % _to_code_string(context)
+            code += "with plt.style.context(%s):\n" % repr(context)
         elif isinstance(context, list):
-            code += "with plt.style.context([%s]):\n" % ", ".join([_to_code_string(s) for s in context])
+            code += "with plt.style.context([%s]):\n" % ", ".join([repr(s) for s in context])
         else:
             raise TypeError("context must be a str or a list of str")
         indentation_level = 1
@@ -667,7 +653,7 @@ def create_matplotlib_script(description, export_name="untitled", context=None, 
                                                     marker_list=marker_list, color_list=color_list,
                                                     line_list=line_list, title_inside=True)
         if "title" in description:
-            code += indentation + 'fig.suptitle(%s)\n' % _to_code_string(description["title"])
+            code += indentation + 'fig.suptitle(%s)\n' % repr(description["title"])
 
         if tight_layout:
             code += indentation + "plt.tight_layout()\n"
@@ -690,7 +676,7 @@ def create_matplotlib_script(description, export_name="untitled", context=None, 
         raise ValueError("Unknown plot type: %s" % description["type"])
 
     if export_format is None or not export_format:
-        code += indentation + 'plt.gcf().canvas.set_window_title(%s)\n' % _to_code_string(export_name)
+        code += indentation + 'plt.gcf().canvas.set_window_title(%s)\n' % repr(export_name)
         code += indentation + 'plt.show()\n'
     else:
         if isinstance(export_format, str):
@@ -802,7 +788,7 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
     for file in file_list:
         basename = os.path.basename(file)[:-4]
         pyfile_path = file[:-3] + "py"
-        with open(pyfile_path, "w") as output:
+        with io.open(pyfile_path, "w", encoding='utf8') as output:
             description = json.load(open(file))
             if "type" not in description:
                 raise ValueError("No type in provided file")
@@ -818,9 +804,14 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
             # If it's a single item multiplot, skip the multiplot container
             if description["type"] == "multiplot" and len(description["plots"]) == 1 and \
                 len(description["plots"][0]) == 1:
-                output.write(create_matplotlib_script(description["plots"][0][0], export_name=basename, **kwargs))
+                code = create_matplotlib_script(description["plots"][0][0], export_name=basename, **kwargs)
             else:
-                output.write(create_matplotlib_script(description, export_name=basename, **kwargs))
+                code = create_matplotlib_script(description, export_name=basename, **kwargs)
+
+            if sys.version_info < (3, 0):
+                output.write(unicode(code))  # noqa
+            else:
+                output.write(code)
         if run:
             proc = subprocess.Popen(["python", os.path.abspath(pyfile_path)],
                                     cwd=os.path.abspath(os.path.dirname(pyfile_path)))
