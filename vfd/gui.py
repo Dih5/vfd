@@ -6,6 +6,7 @@ import sys
 import os
 import tempfile
 import io
+import traceback
 
 import shutil
 from PIL import Image, ImageTk
@@ -168,6 +169,45 @@ class StyleDialog(tk.Frame, object):
     def choose(self):
         pos = list(map(int, self.lst_styles.curselection()))  # int conversion needed for very old Tk
         self.choice = ", ".join([self.style_list[i] for i in pos])
+        self.exit()
+
+    def exit(self):
+        self.master.destroy()
+
+
+class TraceDialog(tk.Frame, object):
+    def __init__(self, master=None, msg="ERROR NOT SPECIFIED"):
+        # BEWARE: master being None will result in adding the dialog to the main window and closing it when the dialog
+        # does so.
+        if master is not None:
+            master = tk.Toplevel(master)
+        self.master = master
+        super(TraceDialog, self).__init__(master=master)
+
+        self.master.title("Error")
+
+        self.txt_trace = tk.Text(master=self)
+        self.txt_trace.insert(tk.END, msg)
+        self.txt_trace.config(state=tk.DISABLED)
+        self.scr_txt_trace = tk.Scrollbar(master=self, orient=tk.VERTICAL)
+        self.txt_trace.config(yscrollcommand=self.scr_txt_trace.set)
+        self.scr_txt_trace.config(command=self.txt_trace.yview)
+        self.scr_txt_trace.pack(side=tk.RIGHT, fill=tk.Y)
+        self.txt_trace.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        self.btn_ok = tk.Button(self, text="OK", command=self.exit)
+        self.btn_ok.pack(side=tk.BOTTOM, fill=tk.X)
+
+        self.choice = None
+
+        self.pack(fill=tk.BOTH, expand=1)
+
+    def add_message(self, msg):
+        self.txt_trace.config(state=tk.NORMAL)
+        self.txt_trace.insert(tk.END, "\n" + msg)
+        self.txt_trace.config(state=tk.DISABLED)
+
+    def exit(self):
         self.master.destroy()
 
 
@@ -175,6 +215,8 @@ class VfdGui(tk.Frame, object):
 
     def __init__(self, master=None):
         super(VfdGui, self).__init__(master=master)
+
+        master.report_callback_exception = self.report_callback_exception
 
         self.master.title("".join(('VFD v', __version__, ' GUI')))
 
@@ -282,6 +324,8 @@ class VfdGui(tk.Frame, object):
         self.file_path = None
         # StyleDialog instance opened
         self.style_dialog = None
+        # TraceDialog instance opened
+        self.trace_dialog = None
         # Preview image
         self.image = None
 
@@ -291,6 +335,15 @@ class VfdGui(tk.Frame, object):
         self.temp_vfd = os.path.join(self.temp_dir, "vfdgui.vfd")
 
         self.master.protocol("WM_DELETE_WINDOW", self.leave)
+
+    def report_callback_exception(self, exc_type, exc_value, exc_traceback):
+        message = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+        if self.trace_dialog is None:
+            self.trace_dialog = TraceDialog(master=self, msg=message)
+            self.wait_window(self.trace_dialog)
+            self.trace_dialog = None
+        else:
+            self.trace_dialog.add_message(message)
 
     def open_style_dialog(self):
         """Open the mpl style selection dialog"""
@@ -403,6 +456,10 @@ class VfdGui(tk.Frame, object):
     def leave(self):
         """Exit the application"""
         shutil.rmtree(self.temp_dir)
+        for d in [self.trace_dialog, self.style_dialog]:
+            if d is not None:
+                d.exit()
+
         self.quit()
 
 
