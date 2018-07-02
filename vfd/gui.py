@@ -459,11 +459,10 @@ class VfdGui(tk.Frame, object):
 
     def leave(self):
         """Exit the application"""
-        shutil.rmtree(self.temp_dir)
         for d in [self.trace_dialog, self.style_dialog]:
             if d is not None:
                 d.exit()
-
+        shutil.rmtree(self.temp_dir)
         self.quit()
 
 
