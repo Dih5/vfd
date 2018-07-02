@@ -16,5 +16,5 @@
         }
      ],
      "xlabel": "I have ', \", \\'a and \\\"a",
-     "ylabel": "Escaped LaTeX acute: \\'a"
+     "ylabel": "Escaped LaTeX acute:\n \\'a"
 }
