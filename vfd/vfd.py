@@ -7,6 +7,7 @@ import os
 import subprocess
 import logging
 import io
+import sys
 
 from jsonschema import validate as validate_schema
 import xlsxwriter
@@ -803,9 +804,14 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
             # If it's a single item multiplot, skip the multiplot container
             if description["type"] == "multiplot" and len(description["plots"]) == 1 and \
                 len(description["plots"][0]) == 1:
-                output.write(create_matplotlib_script(description["plots"][0][0], export_name=basename, **kwargs))
+                code = create_matplotlib_script(description["plots"][0][0], export_name=basename, **kwargs)
             else:
-                output.write(create_matplotlib_script(description, export_name=basename, **kwargs))
+                code = create_matplotlib_script(description, export_name=basename, **kwargs)
+
+            if sys.version_info < (3, 0):
+                output.write(unicode(code))  # noqa
+            else:
+                output.write(code)
         if run:
             proc = subprocess.Popen(["python", os.path.abspath(pyfile_path)],
                                     cwd=os.path.abspath(os.path.dirname(pyfile_path)))
