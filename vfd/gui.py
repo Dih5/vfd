@@ -263,12 +263,16 @@ class VfdGui(tk.Frame, object):
 
         # Create the editor frame
         self.editor_frame = tk.LabelFrame(self.frm_general, text="Edit VFD")
-        self.txt_editor = tk.Text(master=self.editor_frame)
-        self.scr_txt_editor = tk.Scrollbar(self.editor_frame, orient=tk.VERTICAL)
-        self.txt_editor.config(yscrollcommand=self.scr_txt_editor.set)
-        self.scr_txt_editor.config(command=self.txt_editor.yview)
+        self.txt_editor = tk.Text(master=self.editor_frame, wrap=tk.NONE)
+        self.scr_y_txt_editor = tk.Scrollbar(self.editor_frame, orient=tk.VERTICAL)
+        self.txt_editor.config(yscrollcommand=self.scr_y_txt_editor.set)
+        self.scr_y_txt_editor.config(command=self.txt_editor.yview)
+        self.scr_x_txt_editor = tk.Scrollbar(self.editor_frame, orient=tk.HORIZONTAL)
+        self.txt_editor.config(xscrollcommand=self.scr_x_txt_editor.set)
+        self.scr_x_txt_editor.config(command=self.txt_editor.xview)
 
-        self.scr_txt_editor.pack(side=tk.RIGHT, fill=tk.Y)
+        self.scr_y_txt_editor.pack(side=tk.RIGHT, fill=tk.Y)
+        self.scr_x_txt_editor.pack(side=tk.BOTTOM, fill=tk.X)
         self.txt_editor.pack(fill=tk.BOTH, expand=1)
 
         self.editor_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
