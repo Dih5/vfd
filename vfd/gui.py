@@ -137,15 +137,15 @@ class ParBox:
 
 
 class StyleDialog(tk.Frame, object):
-    def __init__(self, master=None):
-        # BEWARE: master being None will result in adding the dialog to the main window and closing it when the dialog
-        # does so.
-        if master is not None:
-            master = tk.Toplevel(master)
-        self.master = master
-        super(StyleDialog, self).__init__(master=master)
+    def __init__(self, main_window=None):
+        if main_window is None:
+            raise ValueError("StyleDialog needs a master to serve")
+        self.main_window = main_window
+        self.top = tk.Toplevel(main_window)
 
-        self.master.title("Select style(s)")
+        super(StyleDialog, self).__init__(master=self.top)
+
+        self.top.title("Select style(s)")
 
         self.style_list = ['default', 'classic'] + sorted(style for style in plt.style.available if style != 'classic')
 
@@ -174,19 +174,20 @@ class StyleDialog(tk.Frame, object):
         self.exit()
 
     def exit(self):
-        self.master.destroy()
+        self.main_window.focus_set()
+        self.top.destroy()
 
 
 class TraceDialog(tk.Frame, object):
-    def __init__(self, master=None, msg="ERROR NOT SPECIFIED"):
-        # BEWARE: master being None will result in adding the dialog to the main window and closing it when the dialog
-        # does so.
-        if master is not None:
-            master = tk.Toplevel(master)
-        self.master = master
-        super(TraceDialog, self).__init__(master=master)
+    def __init__(self, main_window=None, msg=""):
+        if main_window is None:
+            raise ValueError("TraceDialog needs a master to serve")
+        self.main_window = main_window
+        self.top = tk.Toplevel(main_window)
 
-        self.master.title("Error")
+        super(TraceDialog, self).__init__(master=self.top)
+
+        self.top.title("Error")
 
         self.txt_trace = tk.Text(master=self)
         self.txt_trace.insert(tk.END, msg)
@@ -198,19 +199,25 @@ class TraceDialog(tk.Frame, object):
         self.txt_trace.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
         self.btn_ok = tk.Button(self, text="OK", command=self.exit)
+        self.btn_ok.bind('<Return>', lambda event: self.exit())
+        self.btn_ok.bind('<Escape>', lambda event: self.exit())
         self.btn_ok.pack(side=tk.BOTTOM, fill=tk.X)
 
         self.choice = None
 
         self.pack(fill=tk.BOTH, expand=1)
 
+        self.btn_ok.focus_set()
+
     def add_message(self, msg):
         self.txt_trace.config(state=tk.NORMAL)
         self.txt_trace.insert(tk.END, "\n" + msg)
         self.txt_trace.config(state=tk.DISABLED)
+        self.txt_trace.see(tk.END)
 
     def exit(self):
-        self.master.destroy()
+        self.main_window.focus_set()
+        self.top.destroy()
 
 
 class VfdGui(tk.Frame, object):
@@ -350,7 +357,7 @@ class VfdGui(tk.Frame, object):
     def report_callback_exception(self, exc_type, exc_value, exc_traceback):
         message = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
         if self.trace_dialog is None:
-            self.trace_dialog = TraceDialog(master=self, msg=message)
+            self.trace_dialog = TraceDialog(main_window=self, msg=message)
             self.wait_window(self.trace_dialog)
             self.trace_dialog = None
         else:
@@ -359,7 +366,7 @@ class VfdGui(tk.Frame, object):
     def open_style_dialog(self):
         """Open the mpl style selection dialog"""
         if self.style_dialog is None:
-            self.style_dialog = StyleDialog(master=self)
+            self.style_dialog = StyleDialog(main_window=self)
             self.wait_window(self.style_dialog)
             if self.style_dialog.choice is not None:
                 self.var_style.set(self.style_dialog.choice)
