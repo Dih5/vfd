@@ -259,7 +259,7 @@ class VfdGui(tk.Frame, object):
 
         self.toolbar.pack(side=tk.TOP, fill=tk.X, expand=0)
 
-        self.frm_general = tk.Frame(master=self)
+        self.frm_general = tk.PanedWindow(master=self)
 
         # Create the editor frame
         self.editor_frame = tk.LabelFrame(self.frm_general, text="Edit VFD")
@@ -275,7 +275,7 @@ class VfdGui(tk.Frame, object):
         self.scr_x_txt_editor.pack(side=tk.BOTTOM, fill=tk.X)
         self.txt_editor.pack(fill=tk.BOTH, expand=1)
 
-        self.editor_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
+        self.frm_general.add(self.editor_frame)
 
         # Create the matplotlib frame
         self.mpl_frame = tk.LabelFrame(self.frm_general, text="Matplotlib render")
@@ -317,7 +317,7 @@ class VfdGui(tk.Frame, object):
         self.preview = tk.Label(self.mpl_frame, text="Preview will be shown here")
         self.preview.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=1)
 
-        self.mpl_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=1)
+        self.frm_general.add(self.mpl_frame)
 
         self.frm_general.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=1)
 
@@ -423,16 +423,16 @@ class VfdGui(tk.Frame, object):
     def update_preview(self):
         """Update the preview image using the one in the temp dir"""
         image = Image.open(os.path.join(self.temp_dir, "vfdgui.png"))
-        # Image will be reduced if very big
-        # Find the scale best fitting half of the screen
-        max_width = self.master.winfo_screenwidth() / 2
-        max_height = self.master.winfo_screenheight() / 2
+        # Image will be reduced if it's bigger than the available space
+        self.master.update()  # Ensure measure is updated
+        max_width = self.preview.winfo_width()*0.9
+        max_height = self.preview.winfo_height()*0.9
         width, height = image.size
         scale = max(max_width / width, max_height / height)
 
         if scale < 1:  # Reduce, but not increase
             new_width, new_height = int(scale * width), int(scale * height)
-            image = image.resize((new_width, new_height), Image.ANTIALIAS)  # The (250, 250) is (height, width)
+            image = image.resize((new_width, new_height), Image.ANTIALIAS)
 
         self.image = ImageTk.PhotoImage(image)
         self.preview.configure(image=self.image)
