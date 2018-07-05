@@ -2,6 +2,8 @@
 
 """Graphical user interface for vfd."""
 
+from __future__ import division
+
 import sys
 import os
 import tempfile
