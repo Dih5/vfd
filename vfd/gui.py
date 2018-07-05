@@ -236,6 +236,11 @@ class VfdGui(tk.Frame, object):
         self.menu.add_cascade(label="Matplotlib", menu=self.mpl_menu)
         self.master.config(menu=self.menu)
 
+        self.master.bind('<Control-o>', lambda event: self.open_choose())
+        self.master.bind('<Control-s>', lambda event: self.save_choose())
+        self.master.bind('<Control-q>', lambda event: self.leave())
+        self.master.bind('<Control-r>', lambda event: self.refresh())
+
         # Create the toolbar
         self.toolbar = tk.Frame(self, bd=1, relief=tk.RAISED)
 
