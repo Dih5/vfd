@@ -396,6 +396,7 @@ class VfdGui(tk.Frame, object):
             ("Encapsulated PostScript", "*.eps"), ("Scalable Vector Graphics", "*.svg"), ("JPEG", "*.jpg"),
             ("Any supported format", "*")), title='Export using matplotlib')
         if file:
+            # TODO: if an extension was not added to the filename (as I see in Windows), mpl_export will fail
             self.mpl_export(file)
 
     def mpl_export(self, path):
@@ -442,6 +443,9 @@ class VfdGui(tk.Frame, object):
         file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(("Vernacular Figure Description", "*.vfd"),),
                                               title='Save VFD', initialfile=self.file_path if self.file_path else None)
         if file:
+            # If an extension was not added to the filename (I see this in Windows)
+            if file[-4:] != ".vfd":
+                file += ".vfd"
             self.save(file)
 
     def save(self, path):
@@ -454,6 +458,9 @@ class VfdGui(tk.Frame, object):
         file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(("Spreadsheet", "*.xlsx"),),
                                               title='Export as xlsx')
         if file:
+            # If an extension was not added to the filename (I see this in Windows)
+            if file[-5:] != ".xlsx":
+                file += ".xlsx"
             self.export_xlsx(file)
 
     def export_xlsx(self, path):
