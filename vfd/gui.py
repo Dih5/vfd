@@ -427,8 +427,8 @@ class VfdGui(tk.Frame, object):
         image = Image.open(os.path.join(self.temp_dir, "vfdgui.png"))
         # Image will be reduced if it's bigger than the available space
         self.master.update()  # Ensure measure is updated
-        max_width = self.preview.winfo_width()*0.9
-        max_height = self.preview.winfo_height()*0.9
+        max_width = self.preview.winfo_width() * 0.9
+        max_height = self.preview.winfo_height() * 0.9
         width, height = image.size
         scale = max(max_width / width, max_height / height)
 
