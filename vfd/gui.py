@@ -427,14 +427,13 @@ class VfdGui(tk.Frame, object):
         image = Image.open(os.path.join(self.temp_dir, "vfdgui.png"))
         # Image will be reduced if it's bigger than the available space
         self.master.update()  # Ensure measure is updated
-        max_width = self.preview.winfo_width() * 0.9
-        max_height = self.preview.winfo_height() * 0.9
+        max_width = self.preview.winfo_width()
+        max_height = self.preview.winfo_height()
         width, height = image.size
-        scale = max(max_width / width, max_height / height)
+        scale = min(max_width / width, max_height / height)
 
-        if scale < 1:  # Reduce, but not increase
-            new_width, new_height = int(scale * width), int(scale * height)
-            image = image.resize((new_width, new_height), Image.ANTIALIAS)
+        new_width, new_height = int(scale * width), int(scale * height)
+        image = image.resize((new_width, new_height), Image.ANTIALIAS)
 
         self.image = ImageTk.PhotoImage(image)
         self.preview.configure(image=self.image)
