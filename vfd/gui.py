@@ -19,7 +19,7 @@ try:
 
 except ImportError:
     import Tkinter as tk
-    import Tkinter.filedialog as tkfiledialog
+    import tkFileDialog as tkfiledialog
 
 try:
     import matplotlib.pyplot as plt
