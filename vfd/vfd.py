@@ -179,6 +179,13 @@ schema_multiplot = {
 # TODO: Add epilog to schemas
 
 
+def _open_write(path):
+    # io.open seems not to encode properly in windows + python3. Use regular open in py3, just in case.
+    if sys.version_info < (3, 0):
+        return io.open(path, "w", encoding='utf8')
+    else:
+        return open(path, "w")
+
 def _cycle_property(index, property_list):
     return property_list[index % len(property_list)]
 
@@ -788,7 +795,7 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
     for file in file_list:
         basename = os.path.basename(file)[:-4]
         pyfile_path = file[:-3] + "py"
-        with io.open(pyfile_path, "w", encoding='utf8') as output:
+        with _open_write(pyfile_path) as output:
             description = json.load(open(file))
             if "type" not in description:
                 raise ValueError("No type in provided file")
