@@ -834,7 +834,7 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
                 old_cwd = os.getcwd()
                 os.chdir(os.path.abspath(os.path.dirname(pyfile_path)))
                 plt.close('all')
-                with open(os.path.abspath(pyfile_path)) as f:
+                with io.open(os.path.abspath(pyfile_path), "r", encoding="utf8") as f:
                     exec(f.read())
                 plt.close('all')
                 os.chdir(old_cwd)
