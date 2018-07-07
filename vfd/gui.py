@@ -347,7 +347,6 @@ class VfdGui(tk.Frame, object):
         # Preview image
         self.image = None
 
-        
         # Create a temporary directory
         if getattr(sys, 'frozen', False):
             # If running from pyinstaller, use its temporary folder
