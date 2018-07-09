@@ -1,10 +1,8 @@
-Please note this Windows installer includes a python distribution bundled with pyinstaller and the following third party packages:
-- Click
+Please note this Windows installer includes a Python distribution bundled with PyInstaller and the following third party packages:
+- matplotlib (used to produce the plots)
+- XlsxWriter (used to export to Excel format)
 - jsonschema
-- XlsxWriter
 - Pillow
-- matplotlib
-
-When you use this software, you will be also using them.
+When you use this software, you will also be using them.
 
 This installer was made using Inno Setup.
