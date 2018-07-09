@@ -238,6 +238,7 @@ class VfdGui(tk.Frame, object):
         self.file_menu.add_command(label="Quit", underline=0, accelerator="Ctrl+Q", command=self.leave)
         self.menu.add_cascade(label="File", underline=0, menu=self.file_menu)
         self.mpl_menu = tk.Menu(self.menu, tearoff=0)
+        self.mpl_menu.add_command(label="Export script...", command=self.mpl_python_choose)
         self.mpl_menu.add_command(label="Export image...", command=self.mpl_export_choose)
         self.mpl_menu.add_command(label="Refresh preview", accelerator="Ctrl+R", command=self.refresh)
         self.menu.add_cascade(label="Matplotlib", menu=self.mpl_menu)
