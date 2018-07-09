@@ -12,6 +12,11 @@ import sys
 from jsonschema import validate as validate_schema
 import xlsxwriter
 
+try:
+    import matplotlib.pyplot as plt
+except ModuleNotFoundError:
+    plt = None
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.Logger("vfd")
 
@@ -185,6 +190,7 @@ def _open_write(path):
         return io.open(path, "w", encoding='utf8')
     else:
         return open(path, "w")
+
 
 def _cycle_property(index, property_list):
     return property_list[index % len(property_list)]
@@ -820,10 +826,21 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
             else:
                 output.write(code)
         if run:
-            proc = subprocess.Popen(["python", os.path.abspath(pyfile_path)],
-                                    cwd=os.path.abspath(os.path.dirname(pyfile_path)))
+            # FIXME: Running blocking in current interpreter trying to make pyinstaller work.
+            # If this change stays, consider changing the API.
             if blocking:
-                proc.wait()
+                if plt is None:
+                    raise ModuleNotFoundError("Matplotlib was not found, scripts can not be run")
+                old_cwd = os.getcwd()
+                os.chdir(os.path.abspath(os.path.dirname(pyfile_path)))
+                plt.close('all')
+                with io.open(os.path.abspath(pyfile_path), "r", encoding="utf8") as f:
+                    exec(f.read())
+                plt.close('all')
+                os.chdir(old_cwd)
+            else:
+                subprocess.Popen(["python", os.path.abspath(pyfile_path)],
+                                 cwd=os.path.abspath(os.path.dirname(pyfile_path)))
 
 
 def create_xlsx(path=".", expand_glob=True):

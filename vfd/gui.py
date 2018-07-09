@@ -238,6 +238,7 @@ class VfdGui(tk.Frame, object):
         self.file_menu.add_command(label="Quit", underline=0, accelerator="Ctrl+Q", command=self.leave)
         self.menu.add_cascade(label="File", underline=0, menu=self.file_menu)
         self.mpl_menu = tk.Menu(self.menu, tearoff=0)
+        self.mpl_menu.add_command(label="Export script...", command=self.mpl_python_choose)
         self.mpl_menu.add_command(label="Export image...", command=self.mpl_export_choose)
         self.mpl_menu.add_command(label="Refresh preview", accelerator="Ctrl+R", command=self.refresh)
         self.menu.add_cascade(label="Matplotlib", menu=self.mpl_menu)
@@ -325,6 +326,12 @@ class VfdGui(tk.Frame, object):
                                         command=self.mpl_export_choose)
         self.btn_img_export_tt = CreateToolTip(self.btn_img_export, "Export plot")
         self.btn_img_export.pack(side=tk.RIGHT)
+
+        self.img_python = ImageTk.PhotoImage(Image.open(get_ico_path("python.png")))
+        self.btn_python = tk.Button(self.mpl_toolbar, image=self.img_python, relief=tk.FLAT,
+                                    command=self.mpl_python_choose)
+        self.btn_python_tt = CreateToolTip(self.btn_python, "Export python script")
+        self.btn_python.pack(side=tk.RIGHT)
 
         self.mpl_toolbar.pack(side=tk.TOP, fill=tk.X, expand=0)
 
@@ -417,17 +424,33 @@ class VfdGui(tk.Frame, object):
         self.mpl_create_img(ext)
         shutil.copyfile(os.path.join(self.temp_dir, "vfdgui." + ext), path)
 
-    def mpl_create_img(self, format):
-        """Use the temp dir to create an image with the given format"""
-        self.update_temp_file()
+    def get_mpl_parameters(self):
         style = self.var_style.get()
         if "," in style:
             style = list(filter(None, (s.strip() for s in style.split(","))))
         tight = bool(self.var_tight.get())
         scale_multi = bool(self.var_tight.get())
+        return {"context": style, "tight_layout": tight, "scale_multiplot": scale_multi}
 
-        vfd.create_scripts(self.temp_vfd, context=style, tight_layout=tight, run=True, blocking=True,
-                           export_format=[format], scale_multiplot=scale_multi)
+    def mpl_python_choose(self):
+        """Show a dialog to choose where to export a mpl-generating python script"""
+        file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(
+            ("Python script", "*.py"),), title='Export matplotlib script')
+        if file:
+            # If an extension was not added to the filename (I see this in Windows)
+            if file[-3:] != ".py":
+                file += ".py"
+            self.mpl_python(file)
+
+    def mpl_python(self, path):
+        """Export using mpl to the given path"""
+        vfd.create_scripts(self.temp_vfd, run=False, **self.get_mpl_parameters())
+        shutil.copyfile(os.path.join(self.temp_dir, "vfdgui.py"), path)
+
+    def mpl_create_img(self, format):
+        """Use the temp dir to create an image with the given format"""
+        self.update_temp_file()
+        vfd.create_scripts(self.temp_vfd, run=True, blocking=True, export_format=[format], **self.get_mpl_parameters())
 
     def update_preview(self):
         """Update the preview image using the one in the temp dir"""
@@ -482,7 +505,8 @@ class VfdGui(tk.Frame, object):
         for d in [self.trace_dialog, self.style_dialog]:
             if d is not None:
                 d.exit()
-        shutil.rmtree(self.temp_dir)
+        # Delete the temp folder unless running from pyinstaller
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
         self.quit()
 
 

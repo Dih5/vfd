@@ -1,0 +1,10 @@
+Please note this Windows installer includes a python distribution bundled with pyinstaller and the following third party packages:
+- Click
+- jsonschema
+- XlsxWriter
+- Pillow
+- matplotlib
+
+When you use this software, you will be also using them.
+
+This installer was made using Inno Setup.
