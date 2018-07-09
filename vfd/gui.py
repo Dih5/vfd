@@ -354,11 +354,7 @@ class VfdGui(tk.Frame, object):
         self.image = None
 
         # Create a temporary directory
-        if getattr(sys, 'frozen', False):
-            # If running from pyinstaller, use its temporary folder
-            self.temp_dir = sys._MEIPASS
-        else:
-            self.temp_dir = tempfile.mkdtemp()
+        self.temp_dir = tempfile.mkdtemp()
 
         self.temp_vfd = os.path.join(self.temp_dir, "vfdgui.vfd")
 
@@ -509,8 +505,7 @@ class VfdGui(tk.Frame, object):
             if d is not None:
                 d.exit()
         # Delete the temp folder unless running from pyinstaller
-        if not getattr(sys, 'frozen', False):
-            shutil.rmtree(self.temp_dir)
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
         self.quit()
 
 
