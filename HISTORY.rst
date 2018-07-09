@@ -2,6 +2,12 @@
 History
 =======
 
+0.3.1 (2018-07-09)
+------------------
+* Improve GUI
+* Added Windows installer
+* Few minor improvements and fixes.
+
 0.3.0 (2018-07-03)
 ------------------
 
