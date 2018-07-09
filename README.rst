@@ -36,9 +36,10 @@ Features
     * Error bars
     * Color maps (from arrays of 2D data)
     * Multiple plots in one file
-* CLI and python package to plot the files with matplotlib.
+    * Two *x* or *y* axes in the same plot
+* GUI, CLI and python package to plot the files with matplotlib.
 * API mimicking matplotlib's to generate files without changing your code.
-* While version<1.0.0, minor releases will mean API compatibility is broken.
+* File format will be always backward-compatible. While version < 1.0.0, CLI and API might change.
 
 Instalation
 -----------
@@ -47,5 +48,9 @@ To install the latest release, assuming you have a Python_ distribution with pip
     $ pip install vfd
 .. _Python: http://www.python.org/
 .. _pip: https://pip.pypa.io/en/stable/installing/
+
+Windows users with no interest in Python might use the deployed installer_ instead.
+
+.. _installer: https://github.com/Dih5/vfd/releases/latest
 
 If you want to enable bash autocompletion add ``eval "$(_VFD_COMPLETE=source vfd)"`` to your ``.bashrc`` file.
