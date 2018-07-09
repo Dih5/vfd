@@ -8,7 +8,6 @@
 AppId={{E0C12F71-198F-454B-9843-20278ED5EFFF}
 AppName=VFD
 AppVersion=0.3.0
-;AppVerName=VFD 0.3.0
 AppPublisher=Dih5
 AppPublisherURL=https://github.com/Dih5/vfd
 AppSupportURL=https://github.com/Dih5/vfd
