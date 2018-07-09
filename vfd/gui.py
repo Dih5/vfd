@@ -228,6 +228,8 @@ class VfdGui(tk.Frame, object):
         master.report_callback_exception = self.report_callback_exception
 
         self.master.title("".join(('VFD v', __version__, ' GUI')))
+        self.ico = ImageTk.PhotoImage(file=get_ico_path("vfdlogo.png"))
+        self.master.tk.call('wm', 'iconphoto', self.master._w, self.ico)
 
         # Create the menu bar
         self.menu = tk.Menu(self.master)
