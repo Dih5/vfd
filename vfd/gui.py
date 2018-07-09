@@ -254,22 +254,22 @@ class VfdGui(tk.Frame, object):
         # Create the toolbar
         self.toolbar = tk.Frame(self, bd=1, relief=tk.RAISED)
 
-        self.img_open = ImageTk.PhotoImage(Image.open(get_ico_path("document-open.png")))
+        self.img_open = ImageTk.PhotoImage(file=get_ico_path("document-open.png"))
         self.btn_open = tk.Button(self.toolbar, image=self.img_open, relief=tk.FLAT, command=self.open_choose)
         self.btn_open.pack(side=tk.LEFT, padx=2, pady=2)
         self.btn_open_tt = CreateToolTip(self.btn_open, "Open")
 
-        self.img_save = ImageTk.PhotoImage(Image.open(get_ico_path("document-save-as.png")))
+        self.img_save = ImageTk.PhotoImage(file=get_ico_path("document-save-as.png"))
         self.btn_save = tk.Button(self.toolbar, image=self.img_save, relief=tk.FLAT, command=self.save_choose)
         self.btn_save.pack(side=tk.LEFT, padx=2, pady=2)
         self.btn_save_tt = CreateToolTip(self.btn_save, "Save VFD")
 
-        self.img_xlsx = ImageTk.PhotoImage(Image.open(get_ico_path("x-office-spreadsheet.png")))
+        self.img_xlsx = ImageTk.PhotoImage(file=get_ico_path("x-office-spreadsheet.png"))
         self.btn_xlsx = tk.Button(self.toolbar, image=self.img_xlsx, relief=tk.FLAT, command=self.export_xlsx_choose)
         self.btn_xlsx.pack(side=tk.LEFT, padx=2, pady=2)
         self.btn_xlsx_tt = CreateToolTip(self.btn_xlsx, "Export as xlsx")
 
-        self.img_exit = ImageTk.PhotoImage(Image.open(get_ico_path("system-log-out.png")))
+        self.img_exit = ImageTk.PhotoImage(file=get_ico_path("system-log-out.png"))
         self.btn_exit = tk.Button(self.toolbar, image=self.img_exit, relief=tk.FLAT, command=self.leave)
         self.btn_exit.pack(side=tk.LEFT, padx=2, pady=2)
         self.btn_exit_tt = CreateToolTip(self.btn_exit, "Quit")
@@ -318,18 +318,18 @@ class VfdGui(tk.Frame, object):
         self.chk_scale_multi_tt = CreateToolTip(self.chk_scale_multi, "Proportionally scale multiplots?")
         self.chk_scale_multi.pack(side=tk.LEFT)
 
-        self.img_refresh = ImageTk.PhotoImage(Image.open(get_ico_path("go-jump.png")))
+        self.img_refresh = ImageTk.PhotoImage(file=get_ico_path("go-jump.png"))
         self.btn_refresh = tk.Button(self.mpl_toolbar, image=self.img_refresh, relief=tk.FLAT, command=self.refresh)
         self.btn_refresh_tt = CreateToolTip(self.btn_refresh, "Refresh preview")
         self.btn_refresh.pack(side=tk.RIGHT)
 
-        self.img_img = ImageTk.PhotoImage(Image.open(get_ico_path("image-x-generic.png")))
+        self.img_img = ImageTk.PhotoImage(file=get_ico_path("image-x-generic.png"))
         self.btn_img_export = tk.Button(self.mpl_toolbar, image=self.img_img, relief=tk.FLAT,
                                         command=self.mpl_export_choose)
         self.btn_img_export_tt = CreateToolTip(self.btn_img_export, "Export plot")
         self.btn_img_export.pack(side=tk.RIGHT)
 
-        self.img_python = ImageTk.PhotoImage(Image.open(get_ico_path("python.png")))
+        self.img_python = ImageTk.PhotoImage(file=get_ico_path("python.png"))
         self.btn_python = tk.Button(self.mpl_toolbar, image=self.img_python, relief=tk.FLAT,
                                     command=self.mpl_python_choose)
         self.btn_python_tt = CreateToolTip(self.btn_python, "Export python script")
