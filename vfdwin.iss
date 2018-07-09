@@ -19,6 +19,7 @@ InfoBeforeFile=.\vfdwin.txt
 OutputBaseFilename=vfdsetup
 Compression=lzma
 SolidCompression=yes
+ChangesAssociations=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -37,3 +38,8 @@ Name: "{commondesktop}\VFD"; Filename: "{app}\vfdgui.exe"; Tasks: desktopicon
 [Run]
 Filename: "{app}\vfdgui.exe"; Description: "{cm:LaunchProgram,VFD}"; Flags: nowait postinstall skipifsilent
 
+[Registry]
+Root: HKCR; Subkey: ".vfd"; ValueData: "VFD"; Flags: uninsdeletevalue; ValueType: string; ValueName: ""
+Root: HKCR; Subkey: "VFD"; ValueData: "Vernacular Figure Description"; Flags: uninsdeletekey; ValueType: string; ValueName: ""
+Root: HKCR; Subkey: "VFD\DefaultIcon"; ValueData: "{app}\vfdgui.exe,0"; ValueType: string; ValueName: ""
+Root: HKCR; Subkey: "VFD\shell\open\command"; ValueData: """{app}\vfdgui.exe"" ""%1"""; ValueType: string; ValueName: ""
