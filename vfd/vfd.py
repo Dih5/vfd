@@ -8,6 +8,7 @@ import subprocess
 import logging
 import io
 import sys
+import re
 
 from jsonschema import validate as validate_schema
 import xlsxwriter
@@ -27,6 +28,8 @@ default_lines = ['-', '--', ':', '-.']
 default_markers = ['o', 's', '^', 'p', 'v', "8"]
 
 _indentation_size = 4
+
+_float_pattern = '[-+]?(?:(?:\d*\.\d+)|(?:\d+\.?))(?:[Ee][+-]?\d+)?'
 
 schema_style = {
     "type": "object",
@@ -813,17 +816,7 @@ def create_scripts(path=".", run=False, blocking=True, expand_glob=True, **kwarg
         pyfile_path = file[:-3] + "py"
         with _open_write(pyfile_path) as output:
             description = json.load(open(file))
-            if "type" not in description:
-                raise ValueError("No type in provided file")
-            if description["type"] == "plot":
-                validate_schema(description, schema_plot)
-            elif description["type"] == "multiplot":
-                validate_schema(description, schema_multiplot)
-            elif description["type"] == "colorplot":
-                validate_schema(description, schema_colorplot)
-            else:
-                raise ValueError("Unknown type: %s" % description["type"])
-
+            validate_vfd(description)
             # If it's a single item multiplot, skip the multiplot container
             if description["type"] == "multiplot" and len(description["plots"]) == 1 and \
                 len(description["plots"][0]) == 1:
@@ -877,16 +870,7 @@ def create_xlsx(path=".", expand_glob=True):
     for file in file_list:
         pyfile_path = file[:-3] + "xlsx"
         description = json.load(open(file))
-        if "type" not in description:
-            raise ValueError("No type in provided file")
-        if description["type"] == "plot":
-            validate_schema(description, schema_plot)
-        elif description["type"] == "multiplot":
-            validate_schema(description, schema_multiplot)
-        elif description["type"] == "colorplot":
-            validate_schema(description, schema_colorplot)
-        else:
-            raise ValueError("Unknown type: %s" % description["type"])
+        validate_vfd(description)
 
         # If it's a single item multiplot, skip the multiplot container
         if description["type"] == "multiplot" and len(description["plots"]) == 1 and \
@@ -894,3 +878,75 @@ def create_xlsx(path=".", expand_glob=True):
             export_xlsx(description["plots"][0][0], pyfile_path)
         else:
             export_xlsx(description, pyfile_path)
+
+
+def str_to_python(description):
+    """
+    Find a Python representation for the given data in a string.
+
+    Args:
+        description (str): A string defining the JSON object.
+
+    Returns:
+        dict: A python representation of the VFD.
+
+    Raises:
+        json.JSONDecodeError: If the string does not define a well-built JSON.
+        jsonschema.ValidationError: If string defines a JSON but not a well-built VFD.
+
+    """
+    data = json.loads(description)
+    validate_vfd(data)
+    return data
+
+
+def validate_vfd(data):
+    """
+    Check if the given data is a well-built VFD
+
+    Args:
+        data (dict): The data to check
+
+    Raises:
+        jsonschema.ValidationError: If the data is not a well-built VFD.
+
+    """
+    if "type" not in data:
+        raise ValueError("No type in provided file")
+    if data["type"] == "plot":
+        validate_schema(data, schema_plot)
+    elif data["type"] == "multiplot":
+        validate_schema(data, schema_multiplot)
+    elif data["type"] == "colorplot":
+        validate_schema(data, schema_colorplot)
+    else:
+        raise ValueError("Unknown type: %s" % data["type"])
+
+
+def python_to_json(data, compact=False, compact_arrays=True):
+    """
+    Return a JSON representation of the data.
+
+    Args:
+        data (dict): A Python object representing a VFD.
+        compact (bool): Whether to save space in detriment of readability.
+        compact_arrays (bool): If compact was False, whether to make 1d arrays of numbers compact.
+                               This both improves readability and saves space.
+
+    Returns:
+        str: A JSON representation of the data.
+
+    """
+    if compact:
+        my_json = json.dumps(data, sort_keys=True, separators=(',', ':'))
+    else:
+        my_json = json.dumps(data, sort_keys=True, indent=4, separators=(',', ': '))
+        if compact_arrays:
+            # numbers in an array should join in one line
+            # "number   ,  " into "number,":
+            my_json = re.sub(r"(%s)\s*([,\]])\s*" % _float_pattern, r"\g<1>\g<2>", my_json)
+            # "[   number  " into "[number":
+            my_json = re.sub(r"\[\s*(%s)\s*" % _float_pattern, r"[\g<1>", my_json)
+            # "  number   ]" into "number]":
+            my_json = re.sub(r"\s*(%s)\s*\]" % _float_pattern, r"\g<1>]", my_json)
+    return my_json

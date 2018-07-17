@@ -3,14 +3,12 @@
 
 from __future__ import division
 
-import json
 from os import path
 import math
 import tempfile
 import subprocess
 from numbers import Number
 import logging
-import re
 from copy import deepcopy
 
 try:
@@ -23,6 +21,8 @@ try:
     import itertools.izip as zip
 except ImportError:
     pass
+
+from . import vfd
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.Logger("vfd")
@@ -352,19 +352,7 @@ class Builder:
             str: A JSON representation of the data.
 
         """
-        if compact:
-            my_json = json.dumps(self.get_data(), sort_keys=True, separators=(',', ':'))
-        else:
-            my_json = json.dumps(self.get_data(), sort_keys=True, indent=4, separators=(',', ': '))
-            if compact_arrays:
-                # numbers in an array should join in one line
-                # "number   ,  " into "number,":
-                my_json = re.sub(r"(%s)\s*([,\]])\s*" % _float_pattern, r"\g<1>\g<2>", my_json)
-                # "[   number  " into "[number":
-                my_json = re.sub(r"\[\s*(%s)\s*" % _float_pattern, r"[\g<1>", my_json)
-                # "  number   ]" into "number]":
-                my_json = re.sub(r"\s*(%s)\s*\]" % _float_pattern, r"\g<1>]", my_json)
-        return my_json
+        return vfd.python_to_json(self.get_data(), compact=compact, compact_arrays=compact_arrays)
 
     def show(self):
         # TODO: Doesn't work from Jupyter

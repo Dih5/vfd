@@ -239,6 +239,9 @@ class VfdGui(tk.Frame, object):
         self.file_menu.add_command(label="Export as xlsx...", command=self.export_xlsx_choose)
         self.file_menu.add_command(label="Quit", underline=0, accelerator="Ctrl+Q", command=self.leave)
         self.menu.add_cascade(label="File", underline=0, menu=self.file_menu)
+        self.edit_menu = tk.Menu(self.menu, tearoff=0)
+        self.edit_menu.add_command(label="Reformat code", command=self.reformat)
+        self.menu.add_cascade(label="Edit", underline=0, menu=self.edit_menu)
         self.mpl_menu = tk.Menu(self.menu, tearoff=0)
         self.mpl_menu.add_command(label="Export script...", command=self.mpl_python_choose)
         self.mpl_menu.add_command(label="Export image...", command=self.mpl_export_choose)
@@ -371,6 +374,13 @@ class VfdGui(tk.Frame, object):
             self.trace_dialog = None
         else:
             self.trace_dialog.add_message(message)
+
+    def reformat(self):
+        """Fix the json format"""
+        data = vfd.str_to_python(self.txt_editor.get(1.0, tk.END))
+        formatted = vfd.python_to_json(data, compact=False, compact_arrays=True)
+        self.txt_editor.delete(1.0, tk.END)
+        self.txt_editor.insert(tk.END, formatted)
 
     def open_style_dialog(self):
         """Open the mpl style selection dialog"""
