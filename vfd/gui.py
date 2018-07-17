@@ -240,6 +240,8 @@ class VfdGui(tk.Frame, object):
         self.file_menu.add_command(label="Quit", underline=0, accelerator="Ctrl+Q", command=self.leave)
         self.menu.add_cascade(label="File", underline=0, menu=self.file_menu)
         self.edit_menu = tk.Menu(self.menu, tearoff=0)
+        self.edit_menu.add_command(label="Undo", accelerator="Ctrl+Z", command=self.undo)
+        self.edit_menu.add_command(label="Redo", accelerator="Ctrl+Shift+Z", command=self.redo)
         self.edit_menu.add_command(label="Reformat code", command=self.reformat)
         self.menu.add_cascade(label="Edit", underline=0, menu=self.edit_menu)
         self.mpl_menu = tk.Menu(self.menu, tearoff=0)
@@ -283,7 +285,7 @@ class VfdGui(tk.Frame, object):
 
         # Create the editor frame
         self.editor_frame = tk.LabelFrame(self.frm_general, text="Edit VFD")
-        self.txt_editor = tk.Text(master=self.editor_frame, wrap=tk.NONE)
+        self.txt_editor = tk.Text(master=self.editor_frame, wrap=tk.NONE, undo=True, autoseparators=True, maxundo=-1)
         self.scr_y_txt_editor = tk.Scrollbar(self.editor_frame, orient=tk.VERTICAL)
         self.txt_editor.config(yscrollcommand=self.scr_y_txt_editor.set)
         self.scr_y_txt_editor.config(command=self.txt_editor.yview)
@@ -374,6 +376,14 @@ class VfdGui(tk.Frame, object):
             self.trace_dialog = None
         else:
             self.trace_dialog.add_message(message)
+
+    def undo(self):
+        """Call the text editor undo"""
+        return self.txt_editor.edit_undo()
+
+    def redo(self):
+        """Call the text editor redo"""
+        return self.txt_editor.edit_redo()
 
     def reformat(self):
         """Fix the json format"""
