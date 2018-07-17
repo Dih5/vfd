@@ -465,7 +465,8 @@ class VfdGui(tk.Frame, object):
         scale = min(max_width / width, max_height / height)
 
         new_width, new_height = int(scale * width), int(scale * height)
-        image = image.resize((new_width, new_height), Image.ANTIALIAS)
+        if new_width > 0 and new_height > 0:  # Do not resize if window was just to small to display
+            image = image.resize((new_width, new_height), Image.ANTIALIAS)
 
         self.image = ImageTk.PhotoImage(image)
         self.preview.configure(image=self.image)
