@@ -409,10 +409,14 @@ class VfdGui(tk.Frame, object):
 
     def mpl_export_choose(self):
         """Show a dialog to choose where to export a mpl-generated plot"""
+        initialdir, initialfile = os.path.split(self.file_path) if self.file_path else (None, None)
+        if initialfile:
+            initialfile = os.path.splitext(initialfile)[0] + ".png"
         file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(
             ("Portable Network Graphics", "*.png"), ("Portable Document Format", "*.pdf"), ("PostScript", "*.ps"),
             ("Encapsulated PostScript", "*.eps"), ("Scalable Vector Graphics", "*.svg"), ("JPEG", "*.jpg"),
-            ("Any supported format", "*")), title='Export using matplotlib')
+            ("Any supported format", "*")), title='Export using matplotlib', initialfile=initialfile,
+                                              initialdir=initialdir)
         if file:
             # TODO: if an extension was not added to the filename (as I see in Windows), mpl_export will fail
             self.mpl_export(file)
@@ -436,8 +440,12 @@ class VfdGui(tk.Frame, object):
 
     def mpl_python_choose(self):
         """Show a dialog to choose where to export a mpl-generating python script"""
-        file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(
-            ("Python script", "*.py"),), title='Export matplotlib script')
+        initialdir, initialfile = os.path.split(self.file_path) if self.file_path else (None, None)
+        if initialfile:
+            initialfile = os.path.splitext(initialfile)[0] + ".py"
+        file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(("Python script", "*.py"),),
+                                              title='Export matplotlib script', initialfile=initialfile,
+                                              initialdir=initialdir)
         if file:
             # If an extension was not added to the filename (I see this in Windows)
             if file[-3:] != ".py":
@@ -474,8 +482,9 @@ class VfdGui(tk.Frame, object):
     def save_choose(self):
         """Show a dialog to choose where to save the edited VFD file"""
         # TODO: Check if well formed
+        initialdir, initialfile = os.path.split(self.file_path) if self.file_path else (None, None)
         file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(("Vernacular Figure Description", "*.vfd"),),
-                                              title='Save VFD', initialfile=self.file_path if self.file_path else None)
+                                              title='Save VFD', initialfile=initialfile, initialdir=initialdir)
         if file:
             # If an extension was not added to the filename (I see this in Windows)
             if file[-4:] != ".vfd":
@@ -489,8 +498,11 @@ class VfdGui(tk.Frame, object):
 
     def export_xlsx_choose(self):
         """Show a dialog to choose where to export in xlsx format"""
+        initialdir, initialfile = os.path.split(self.file_path) if self.file_path else (None, None)
+        if initialfile:
+            initialfile = os.path.splitext(initialfile)[0] + ".xlsx"
         file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(("Spreadsheet", "*.xlsx"),),
-                                              title='Export as xlsx')
+                                              title='Export as xlsx', initialfile=initialfile, initialdir=initialdir)
         if file:
             # If an extension was not added to the filename (I see this in Windows)
             if file[-5:] != ".xlsx":
