@@ -558,6 +558,16 @@ def _create_matplotlib_colorplot(description, container="plt", current_axes=True
     except KeyError:
         pass
 
+    if "xrange" in description:
+        code += indentation + container + ('.' if current_axes else '.set_') + 'xlim(%f,%f)\n' % (
+            description["xrange"][0], description["xrange"][1])
+    if "yrange" in description:
+        code += indentation + container + ('.' if current_axes else '.set_') + 'ylim(%f,%f)\n' % (
+            description["yrange"][0], description["yrange"][1])
+    if "zrange" in description and plot_f not in ["contour", "contourf"]:
+        code += indentation + container + ('.' if current_axes else '.set_') + 'clim(%f,%f)\n' % (
+            description["zrange"][0], description["zrange"][1])
+
     if "xlabel" in description:
         code += indentation + container + ('.' if current_axes else '.set_') + 'xlabel(%s)\n' % repr(
             description["xlabel"])
