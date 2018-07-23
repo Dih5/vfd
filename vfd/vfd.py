@@ -358,7 +358,7 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
 
         if any([i in s for i in {"xerr", "xmax", "xmin", "yerr", "ymin", "ymax"}]):
             # Error bar plot
-            if "ymin" or "ymax" in s:
+            if "ymin" in s or "ymax" in s:
                 # Custom error bars
                 ymin = _full_errorbar(y, s["ymin"] if "ymin" in s else None, s["yerr"] if "yerr" in s else None,
                                       False)
@@ -368,7 +368,7 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
                 kwargs["yerr"] = [ymin, ymax]
             elif "yerr" in s:
                 kwargs["yerr"] = s["yerr"]
-            if "xmin" or "xmax" in s:
+            if "xmin" in s or "xmax" in s:
                 # Custom error bars
                 x = s["x"] if "x" in s else list(range(len(y)))
                 xmin = _full_errorbar(x, s["xmin"] if "xmin" in s else None, s["xerr"] if "xerr" in s else None,
@@ -379,7 +379,6 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
                 kwargs["xerr"] = [xmin, xmax]
             elif "xerr" in s:
                 kwargs["xerr"] = s["xerr"]
-
             if "joined" in s:
                 if not s["joined"]:
                     kwargs["fmt"] = _cycle_property(marker_count, marker_list)
