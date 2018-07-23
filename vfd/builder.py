@@ -150,7 +150,7 @@ class Builder:
         else:
             new_series["x"], new_series["y"] = _ensure_normal_type(args[0], args[1])
         if "label" in kwargs:
-            new_series["label"] = kwargs["label"]
+            new_series["label"] = str(kwargs["label"])
 
         if "series" not in self.data:
             self.data["series"] = [new_series]
@@ -179,7 +179,7 @@ class Builder:
                 new_series["xmin"] = _ensure_normal_type([y0 - err for y0, err in zip(x, xerr[1])])[0]
 
         if "label" in kwargs:
-            new_series["label"] = kwargs["label"]
+            new_series["label"] = str(kwargs["label"])
 
         if "series" not in self.data:
             self.data["series"] = [new_series]
@@ -481,7 +481,7 @@ class AxesBuilder:
                 new_series["xmin"] = _ensure_normal_type([y0 - err for y0, err in zip(x, xerr[1])])[0]
 
         if "label" in kwargs:
-            new_series["label"] = kwargs["label"]
+            new_series["label"] = str(kwargs["label"])
 
         if "series" not in self.data:
             self.data["series"] = [new_series]
@@ -500,7 +500,7 @@ class AxesBuilder:
         else:
             new_series["x"], new_series["y"] = _ensure_normal_type(args[0], args[1])
         if "label" in kwargs:
-            new_series["label"] = kwargs["label"]
+            new_series["label"] = str(kwargs["label"])
 
         if "series" not in self.data:
             self.data["series"] = [new_series]
