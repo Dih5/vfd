@@ -356,37 +356,54 @@ def _create_matplotlib_plot(description, container="plt", current_axes=True, ind
         if series_xaxis or series_yaxis and "color" not in kwargs:
             kwargs["color"] = "C" + str(series_index)
 
-        if any([i in s for i in {"xerr", "xmax", "xmin", "yerr", "ymin", "ymax"}]):
-            # Error bar plot
-            if "ymin" in s or "ymax" in s:
-                # Custom error bars
-                ymin = _full_errorbar(y, s["ymin"] if "ymin" in s else None, s["yerr"] if "yerr" in s else None,
-                                      False)
-                ymax = _full_errorbar(y, s["ymax"] if "ymax" in s else None, s["yerr"] if "yerr" in s else None,
-                                      True)
+        if any([i in s for i in ["xerr", "xmax", "xmin", "yerr", "ymin", "ymax"]]):
+            # Some kind of error plot
+            if "joined" in s and s["joined"] and all([i not in s for i in ["xerr", "xmax", "xmin"]]):
+                # Shadowed region instead of points with error bars
+                ymin = s["ymin"] if "ymin" in s else [y1 - y2 for y1, y2 in zip(s["y"], s["yerr"])]
+                ymax = s["ymax"] if "ymax" in s else [y1 + y2 for y1, y2 in zip(s["y"], s["yerr"])]
+                code += indentation + series_container + '.plot(*%s,%s**%s)\n' % (
+                    args, "\n" + indentation + " " * 12, kwargs)
+                # X coordinates are needed explicitly
+                if "x" in s:
+                    x = s["x"]
+                else:
+                    x = list(range(len(s["y"])))
+                kwargs["alpha"]=0.5  # Half-transparency seems desirable
+                code += indentation + series_container + '.fill_between(*%s,%s**%s)\n' % (
+                    [x, ymin, ymax], "\n" + indentation + " " * 12, kwargs)
 
-                kwargs["yerr"] = [ymin, ymax]
-            elif "yerr" in s:
-                kwargs["yerr"] = s["yerr"]
-            if "xmin" in s or "xmax" in s:
-                # Custom error bars
-                x = s["x"] if "x" in s else list(range(len(y)))
-                xmin = _full_errorbar(x, s["xmin"] if "xmin" in s else None, s["xerr"] if "xerr" in s else None,
-                                      False)
-                xmax = _full_errorbar(x, s["xmax"] if "xmax" in s else None, s["xerr"] if "xerr" in s else None,
-                                      True)
+            else:
+                # Error bar plot
+                if "ymin" in s or "ymax" in s:
+                    # Custom error bars
+                    ymin = _full_errorbar(y, s["ymin"] if "ymin" in s else None, s["yerr"] if "yerr" in s else None,
+                                          False)
+                    ymax = _full_errorbar(y, s["ymax"] if "ymax" in s else None, s["yerr"] if "yerr" in s else None,
+                                          True)
 
-                kwargs["xerr"] = [xmin, xmax]
-            elif "xerr" in s:
-                kwargs["xerr"] = s["xerr"]
-            if "joined" in s:
-                if not s["joined"]:
-                    kwargs["fmt"] = _cycle_property(marker_count, marker_list)
-                    marker_count += 1
+                    kwargs["yerr"] = [ymin, ymax]
+                elif "yerr" in s:
+                    kwargs["yerr"] = s["yerr"]
+                if "xmin" in s or "xmax" in s:
+                    # Custom error bars
+                    x = s["x"] if "x" in s else list(range(len(y)))
+                    xmin = _full_errorbar(x, s["xmin"] if "xmin" in s else None, s["xerr"] if "xerr" in s else None,
+                                          False)
+                    xmax = _full_errorbar(x, s["xmax"] if "xmax" in s else None, s["xerr"] if "xerr" in s else None,
+                                          True)
 
-            # Add indentation to aid edition
-            code += indentation + series_container + '.errorbar(*%s,%s**%s)\n' % (
-                args, "\n" + indentation + " " * 12, kwargs)
+                    kwargs["xerr"] = [xmin, xmax]
+                elif "xerr" in s:
+                    kwargs["xerr"] = s["xerr"]
+                if "joined" in s:
+                    if not s["joined"]:
+                        kwargs["fmt"] = _cycle_property(marker_count, marker_list)
+                        marker_count += 1
+
+                # Add indentation to aid edition
+                code += indentation + series_container + '.errorbar(*%s,%s**%s)\n' % (
+                    args, "\n" + indentation + " " * 12, kwargs)
         else:
             # Regular plot
             if "joined" in s:
