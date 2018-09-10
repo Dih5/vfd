@@ -48,6 +48,7 @@ setup(
     include_package_data=True,
     keywords=['vfd', 'plotting'],
     name='vfd',
+    package_data={'vfd': ["vfd/img"]},
     packages=find_packages(include=['vfd']),
     setup_requires=setup_requirements,
     test_suite='tests',
