@@ -7,7 +7,7 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{E0C12F71-198F-454B-9843-20278ED5EFFF}
 AppName=VFD
-AppVersion=0.3.1
+AppVersion=AppVersion='0.3.2'
 AppPublisher=Dih5
 AppPublisherURL=https://github.com/Dih5/vfd
 AppSupportURL=https://github.com/Dih5/vfd
