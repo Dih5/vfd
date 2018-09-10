@@ -2,6 +2,10 @@
 History
 =======
 
+0.3.2 (2018-09-10)
+------------------
+* Few minor improvements and fixes.
+
 0.3.1 (2018-07-09)
 ------------------
 * Improve GUI
