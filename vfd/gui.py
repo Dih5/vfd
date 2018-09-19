@@ -16,10 +16,12 @@ from PIL import Image, ImageTk
 try:
     import tkinter as tk
     import tkinter.filedialog as tkfiledialog
+    import tkinter.messagebox as tkmessagebox
 
 except ImportError:
     import Tkinter as tk
     import tkFileDialog as tkfiledialog
+    import tkMessageBox as tkmessagebox
 
 try:
     import matplotlib.pyplot as plt
@@ -403,6 +405,8 @@ class VfdGui(tk.Frame, object):
 
     def open_choose(self):
         """Show a dialog to choose which VFD to open"""
+        if self.confirm_close_modified():
+            return
         file = tkfiledialog.askopenfile(parent=self, mode='r', filetypes=(("VFD file", "*.vfd"), ("all files", "*.*")),
                                         title='Open a VFD')
         if file:
@@ -416,7 +420,26 @@ class VfdGui(tk.Frame, object):
 
         self.txt_editor.delete(1.0, tk.END)
         self.txt_editor.insert(tk.END, text)
+        self.txt_editor.edit_modified(False)
         self.refresh()
+
+    def confirm_close_modified(self):
+        """
+        Check if the vfd was modified. If true, offer to save, discard or cancel.
+
+        Returns:
+            bool: True if need to abort the operation leading to this one.
+        """
+        if self.txt_editor.edit_modified():
+            response = tkmessagebox.askyesnocancel(title="Save VFD?",
+                                                   message="The VFD file has been modified. Save changes?")
+            if response is None:  # Cancelled
+                return True
+            elif response:  # Yes
+                if not self.save_choose():  # If user cancels now saving
+                    return True
+        # If said no
+        return False
 
     def update_temp_file(self):
         """Update the vfd in temp dir"""
@@ -500,7 +523,12 @@ class VfdGui(tk.Frame, object):
         self.preview.configure(image=self.image)
 
     def save_choose(self):
-        """Show a dialog to choose where to save the edited VFD file"""
+        """
+        Show a dialog to choose where to save the edited VFD file.
+
+        Returns:
+            bool: True if chosen to save, False if cancelled.
+        """
         # TODO: Check if well formed
         initialdir, initialfile = os.path.split(self.file_path) if self.file_path else (None, None)
         file = tkfiledialog.asksaveasfilename(parent=self, filetypes=(("Vernacular Figure Description", "*.vfd"),),
@@ -510,11 +538,15 @@ class VfdGui(tk.Frame, object):
             if file[-4:] != ".vfd":
                 file += ".vfd"
             self.save(file)
+            return True
+        else:  # Cancelled
+            return False
 
     def save(self, path):
         """Save the edited VFD to the given path"""
         with io.open(path, 'w', encoding='utf8') as file:
             file.write(self.txt_editor.get(1.0, tk.END))
+        self.txt_editor.edit_modified(False)
 
     def export_xlsx_choose(self):
         """Show a dialog to choose where to export in xlsx format"""
@@ -537,6 +569,8 @@ class VfdGui(tk.Frame, object):
 
     def leave(self):
         """Exit the application"""
+        if self.confirm_close_modified():
+            return
         for d in [self.trace_dialog, self.style_dialog]:
             if d is not None:
                 d.exit()
