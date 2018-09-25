@@ -25,7 +25,7 @@ default_colors = ['#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD', '#8C564
 
 default_lines = ['-', '--', ':', '-.']
 
-default_markers = ['o', 's', '^', 'p', 'v', "8"]
+default_markers = ['o', 's', '^', 'p', 'v', "d", "P", "*"]
 
 _indentation_size = 4
 
